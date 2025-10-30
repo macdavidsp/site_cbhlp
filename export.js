@@ -10,7 +10,7 @@ function exportarCSV() {
     return;
   }
 
-  const cabecalho = "Nome,Código de Verificação,Instituição,Setor";
+  const cabecalho = "Nome,Instituição,Setor,Código de Verificação";
   const linhas = dados.map(p => {
     const codigo = gerarCodigoVerificacao(p.cpf);
     return `${p.nome},${codigo},${p.instituicao},${p.setor}`;
