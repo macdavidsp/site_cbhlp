@@ -1,25 +1,36 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Cadastro de Participante</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h2>Ficha Cadastral</h2>
-  <form id="cadastroForm">
-    <input type="text" name="nome" placeholder="Nome completo" required>
-    <input type="text" name="cpf" placeholder="CPF" required>
-    <input type="text" name="instituicao" placeholder="Instituição" required>
-    <select name="setor" required>
-      <option value="">Selecione o setor</option>
-      <option value="Usuário">Usuário</option>
-      <option value="Poder Público">Poder Público</option>
-      <option value="Sociedade Civil">Sociedade Civil</option>
-    </select>
-    <button type="submit">Registrar Presença</button>
-  </form>
-  <p id="mensagem"></p>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html">Início</a></li>
+        <li><a href="quorum.html">Quórum</a></li>
+        <li><a href="admin.html">Administração</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main>
+    <h2>Ficha Cadastral</h2>
+    <form id="cadastroForm">
+      <input type="text" name="nome" placeholder="Nome completo" required />
+      <input type="text" name="cpf" placeholder="CPF" required />
+      <input type="text" name="instituicao" placeholder="Instituição" required />
+      <select name="setor" required>
+        <option value="">Selecione o setor</option>
+        <option value="Usuário">Usuário</option>
+        <option value="Poder Público">Poder Público</option>
+        <option value="Sociedade Civil">Sociedade Civil</option>
+      </select>
+      <button type="submit">Registrar Presença</button>
+    </form>
+    <p id="mensagem"></p>
+  </main>
   <script src="script.js"></script>
 </body>
 </html>

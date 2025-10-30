@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const percentual = document.getElementById("percentual");
   if (total && percentual) {
     total.textContent = participantes.length;
-    percentual.textContent = ((participantes.length / 10) * 100).toFixed(0); // Exemplo: 10 membros
+    percentual.textContent = ((participantes.length / 10) * 100).toFixed(0);
   }
 
   const loginForm = document.getElementById("loginForm");

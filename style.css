@@ -1,27 +1,73 @@
 body {
-  font-family: Arial, sans-serif;
-  margin: 20px;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(to right, #f0f4f8, #e8f0fe);
+  color: #333;
+  margin: 0;
+  padding: 20px;
 }
-form input, form select {
-  display: block;
-  margin: 10px 0;
-  padding: 8px;
-  width: 300px;
+
+header {
+  background-color: #ffffff;
+  padding: 10px 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
-button {
-  padding: 10px 20px;
-}
+
 nav ul {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
   list-style: none;
   padding: 0;
 }
-nav li {
-  margin: 10px 0;
+
+nav a {
+  text-decoration: none;
+  color: #4CAF50;
+  font-weight: bold;
 }
+
+main {
+  max-width: 600px;
+  margin: auto;
+  padding: 20px;
+}
+
+form {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+input, select, button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
 table {
+  width: 100%;
   border-collapse: collapse;
   margin-top: 20px;
 }
+
 table, th, td {
   border: 1px solid #ccc;
   padding: 8px;
