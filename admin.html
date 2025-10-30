@@ -12,6 +12,7 @@
         <li><a href="index.html">Início</a></li>
         <li><a href="cadastro.html">Cadastro</a></li>
         <li><a href="quorum.html">Quórum</a></li>
+        <li><a href="verificar.html">Verificar Assinatura</a></li>
       </ul>
     </nav>
   </header>
@@ -22,13 +23,21 @@
       <input type="password" placeholder="Senha" required name="senha" />
       <button type="submit">Entrar</button>
     </form>
+
     <div id="painel" style="display:none;">
       <h3>Lista de Frequência</h3>
       <table id="tabelaFrequencia"></table>
       <button onclick="exportarCSV()">Exportar CSV</button>
       <button onclick="exportarPDF()">Exportar PDF</button>
+      <p style="margin-top:10px; font-size:0.9em;">
+        As assinaturas podem ser verificadas em: <br />
+        <a href="https://macdavidsp.github.io/cbhlp/verificar.html" target="_blank">
+          https://macdavidsp.github.io/cbhlp/verificar.html
+        </a>
+      </p>
     </div>
   </main>
+
   <script src="script.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="export.js"></script>

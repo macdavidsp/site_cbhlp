@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Verificação de Assinatura</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html">Início</a></li>
+        <li><a href="cadastro.html">Cadastro</a></li>
+        <li><a href="quorum.html">Quórum</a></li>
+        <li><a href="admin.html">Administração</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main>
+    <h2>Verificação de Assinatura</h2>
+    <form id="verificarForm">
+      <input type="text" placeholder="Código de verificação" required name="codigo" />
+      <button type="submit">Verificar</button>
+    </form>
+    <p id="resultado"></p>
+  </main>
+  <script>
+    function gerarCodigoVerificacao(cpf) {
+      return "ID-" + btoa(cpf).slice(0, 8);
+    }
+
+    document.getElementById("verificarForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const codigo = new FormData(this).get("codigo");
+      const dados = JSON.parse(localStorage.getItem("frequencia")) || [];
+      const encontrado = dados.find(p => gerarCodigoVerificacao(p.cpf) === codigo);
+      document.getElementById("resultado").textContent = encontrado
+        ? `Assinatura válida: ${encontrado.nome}, ${encontrado.instituicao}, ${encontrado.setor}`
+        : "Código não encontrado ou inválido.";
+    });
+  </script>
+</body>
+</html>
