@@ -33,6 +33,14 @@ main {
   max-width: 600px;
   margin: auto;
   padding: 20px;
+  text-align: center;
+}
+
+.logo {
+  display: block;
+  margin: 0 auto 20px auto;
+  max-width: 300px;
+  height: auto;
 }
 
 form {
