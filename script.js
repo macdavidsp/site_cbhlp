@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loginForm.addEventListener("submit", (e) => {
       e.preventDefault();
       const { usuario, senha } = Object.fromEntries(new FormData(loginForm));
-      if (usuario === "admin" && senha === "1234") {
+      if (usuario === "admin" && senha === "admin2025") {
         document.getElementById("painel").style.display = "block";
         loginForm.style.display = "none";
         const tabela = document.getElementById("tabelaFrequencia");
