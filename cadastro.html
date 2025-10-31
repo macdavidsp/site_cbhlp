@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Registro de Participante</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
   <header>
@@ -23,24 +24,51 @@
       <input type="text" name="nome" placeholder="Nome completo" required />
       <input type="text" name="cpf" placeholder="CPF" required />
       <input type="text" name="instituicao" placeholder="Instituição" required />
-
       <select name="setor" required>
-        <option value="">Selecione o setor</option>
+        <option value="">Setor</option>
         <option value="Usuário">Usuário</option>
         <option value="Poder Público">Poder Público</option>
         <option value="Sociedade Civil">Sociedade Civil</option>
       </select>
-
       <select name="representacao" required>
-        <option value="">Selecione a representação</option>
+        <option value="">Representação</option>
         <option value="Titular">Titular</option>
         <option value="Suplente">Suplente</option>
       </select>
-
+      <input type="date" name="data_reuniao" required />
       <button type="submit">Registrar Presença</button>
     </form>
     <p id="mensagem"></p>
   </main>
-  <script src="script.js"></script>
+
+  <script>
+    const supabase = supabase.createClient(
+      'https://wdxwgtkgkhdeslmbkmnt.supabase.co', // substitua pela sua URL
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHdndGtna2hkZXNsbWJrbW50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE4Nzk5NzgsImV4cCI6MjA3NzQ1NTk3OH0._UfUZYLU9tY-nmWYt88fO9sOifCugPxPfQ6rQ-d0t_M' // substitua pela sua chave pública
+    );
+
+    document.getElementById("cadastroForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const dados = Object.fromEntries(new FormData(this));
+      const codigo = "ID-" + btoa(dados.cpf).slice(0, 8);
+
+      const { error } = await supabase.from("presencas").insert([{
+        nome: dados.nome,
+        cpf: dados.cpf,
+        instituicao: dados.instituicao,
+        setor: dados.setor,
+        representacao: dados.representacao,
+        data_reuniao: dados.data_reuniao,
+        codigo: codigo
+      }]);
+
+      if (error) {
+        document.getElementById("mensagem").textContent = "Erro: " + error.message;
+      } else {
+        document.getElementById("mensagem").textContent = "Presença registrada com sucesso!";
+        this.reset();
+      }
+    });
+  </script>
 </body>
 </html>
