@@ -2,16 +2,18 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-    <title>Registro de Presença</title>
+  <title>Registro de Participante</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
     <nav>
       <ul>
-        <li><a href="index.html">Início</a></li>
-        <li><a href="quorum.html">Quórum</a></li>
-        <li><a href="admin.html">Administração</a></li>
+        <li><a href="index.html">INICIAL</a></li>
+        <li><a href="cadastro.html">REGISTRO</a></li>
+        <li><a href="quorum.html">QUORUM</a></li>
+        <li><a href="verificar.html">VERIFICAÇÃO</a></li>
+        <li><a href="admin.html">ADMIN</a></li>
       </ul>
     </nav>
   </header>
@@ -21,16 +23,20 @@
       <input type="text" name="nome" placeholder="Nome completo" required />
       <input type="text" name="cpf" placeholder="CPF" required />
       <input type="text" name="instituicao" placeholder="Instituição" required />
+
       <select name="setor" required>
         <option value="">Selecione o setor</option>
         <option value="Usuário">Usuário</option>
         <option value="Poder Público">Poder Público</option>
         <option value="Sociedade Civil">Sociedade Civil</option>
-       <select name="participação" required>
-        <option value="">Selecione o representação</option>
+      </select>
+
+      <select name="representacao" required>
+        <option value="">Selecione a representação</option>
         <option value="Titular">Titular</option>
         <option value="Suplente">Suplente</option>
       </select>
+
       <button type="submit">Registrar Presença</button>
     </form>
     <p id="mensagem"></p>

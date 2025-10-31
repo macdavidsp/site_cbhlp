@@ -1,5 +1,4 @@
 function gerarCodigoVerificacao(cpf) {
-  // Gera um código único baseado no CPF (simples codificação base64)
   return "ID-" + btoa(cpf).slice(0, 8);
 }
 
@@ -10,10 +9,10 @@ function exportarCSV() {
     return;
   }
 
-  const cabecalho = "Nome,Instituição,Setor,Código de Verificação";
+  const cabecalho = "Nome,Entidade,Representação,Setor,Código de Verificação";
   const linhas = dados.map(p => {
     const codigo = gerarCodigoVerificacao(p.cpf);
-    return `${p.nome},${codigo},${p.instituicao},${p.setor}`;
+    return `${p.nome},${p.instituicao},${p.representacao},${p.setor},${codigo}`;
   });
 
   const csv = [cabecalho, ...linhas].join("\n");
@@ -36,24 +35,52 @@ function exportarPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
-  doc.setFontSize(14);
-  doc.text("Lista de Frequência", 10, 10);
+  // Título e subtítulo
+  doc.setFontSize(16);
+  doc.text("Comitê de Bacia do Lago de Palmas - CBHLP", 10, 15);
+  doc.setFontSize(12);
+  doc.text("Lista de Frequência da Reunião Ordinária", 10, 23);
 
+  // Data atual
+  const hoje = new Date();
+  const dia = String(hoje.getDate()).padStart(2, "0");
+  const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+  const ano = hoje.getFullYear();
+  const dataFormatada = `${dia}/${mes}/${ano}`;
   doc.setFontSize(10);
-  doc.text("Assinaturas podem ser verificadas em:", 10, 18);
-  doc.text("https://macdavidsp.github.io/cbhlp/verificar.html", 10, 24);
+  doc.text(`Data da assinatura: ${dataFormatada}`, 10, 30);
 
-  let y = 35;
+  // Cabeçalho da tabela
+  let y = 40;
+  doc.setFontSize(10);
+  doc.text("Nome", 10, y);
+  doc.text("Entidade", 60, y);
+  doc.text("Representação", 110, y);
+  doc.text("Setor", 150, y);
+  doc.text("Código", 180, y);
+
+  y += 8;
+
+  // Linhas da tabela
   dados.forEach((p, i) => {
     const codigo = gerarCodigoVerificacao(p.cpf);
-    const linha = `${i + 1}. ${p.nome} - ${codigo} - ${p.instituicao} - ${p.setor}`;
-    doc.text(linha, 10, y);
-    y += 10;
-    if (y > 280) {
+    doc.text(p.nome, 10, y);
+    doc.text(p.instituicao, 60, y);
+    doc.text(p.representacao, 110, y);
+    doc.text(p.setor, 150, y);
+    doc.text(codigo, 180, y);
+    y += 8;
+    if (y > 270) {
       doc.addPage();
       y = 20;
     }
   });
+
+  // Rodapé com link de verificação
+  y += 10;
+  doc.setFontSize(9);
+  doc.text("Assinaturas podem ser verificadas em:", 10, y);
+  doc.text("https://macdavidsp.github.io/cbhlp/verificar.html", 10, y + 6);
 
   doc.save("frequencia.pdf");
 }

@@ -3,5 +3,5 @@
 # 
 # usethis::git_sitrep()
 # 
-# usethis::browse_github()
+usethis::browse_github()
 # 

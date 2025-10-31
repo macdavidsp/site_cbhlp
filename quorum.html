@@ -10,10 +10,11 @@
   <header>
     <nav>
       <ul>
-        <li><a href="index.html">Início</a></li>
-        <li><a href="cadastro.html">Cadastro</a></li>
-        <li><a href="admin.html">Administração</a></li>
-        <li><a href="verificar.html">Verificar Assinatura</a></li>
+        <li><a href="index.html">INICIAL</a></li>
+        <li><a href="cadastro.html">REGISTRO</a></li>
+        <li><a href="quorum.html">QUORUM</a></li>
+        <li><a href="verificar.html">VERIFICAÇÃO</a></li>
+        <li><a href="admin.html">ADMIN</a></li>
       </ul>
     </nav>
   </header>
@@ -21,21 +22,16 @@
     <h2>Acompanhamento do Quórum</h2>
     <p>Total de participantes: <span id="total"></span></p>
     <p>Quórum atingido: <span id="percentual"></span>%</p>
-
     <canvas id="graficoQuorum" width="400" height="400"></canvas>
   </main>
-
   <script>
     const participantes = JSON.parse(localStorage.getItem("frequencia")) || [];
     const total = participantes.length;
-    const metaQuorum = 20; // número mínimo para quórum
+    const metaQuorum = 10;
     const percentual = ((total / metaQuorum) * 100).toFixed(0);
-
     document.getElementById("total").textContent = total;
     document.getElementById("percentual").textContent = percentual;
-
     const restante = Math.max(metaQuorum - total, 0);
-
     const ctx = document.getElementById("graficoQuorum").getContext("2d");
     new Chart(ctx, {
       type: "doughnut",
@@ -50,13 +46,8 @@
       options: {
         responsive: true,
         plugins: {
-          legend: {
-            position: "bottom"
-          },
-          title: {
-            display: true,
-            text: "Quórum da Reunião"
-          }
+          legend: { position: "bottom" },
+          title: { display: true, text: "Quórum da Reunião" }
         }
       }
     });
