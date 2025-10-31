@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <title>Administração</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="export.js"></script>
 </head>
 <body>
   <header>
@@ -18,27 +21,25 @@
     </nav>
   </header>
   <main>
-    <h2>Login do Administrador</h2>
-    <form id="loginForm">
-      <input type="text" placeholder="Usuário" required name="usuario" />
-      <input type="password" placeholder="Senha" required name="senha" />
-      <button type="submit">Entrar</button>
-    </form>
-    <div id="painel" style="display:none;">
-      <h3>Lista de Frequência</h3>
-      <table id="tabelaFrequencia"></table>
-      <button onclick="exportarCSV()">Exportar CSV</button>
-      <button onclick="exportarPDF()">Exportar PDF</button>
-      <p style="margin-top:10px; font-size:0.9em;">
-        As assinaturas podem ser verificadas em: <br />
-        <a href="https://macdavidsp.github.io/cbhlp/verificar.html" target="_blank">
-          https://macdavidsp.github.io/cbhlp/verificar.html
-        </a>
-      </p>
-    </div>
+    <h2>Lista de Frequência</h2>
+    <table id="tabelaFrequencia"></table>
+    <button onclick="exportarCSV()">Exportar CSV</button>
+    <button onclick="exportarPDF()">Exportar PDF</button>
   </main>
-  <script src="script.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="export.js"></script>
+  <script>
+    const supabase = supabase.createClient(
+      'https://SEU-PROJECT.supabase.co',
+      'SUA-CHAVE-PUBLICA'
+    );
+
+    async function carregarLista() {
+      const { data: registros } = await supabase.from("presencas").select("*");
+      const tabela = document.getElementById("tabelaFrequencia");
+      tabela.innerHTML = "<tr><th>Nome</th><th>Entidade</th><th>Representação</th><th>Setor</th><th>Código</th></tr>" +
+        registros.map(r => `<tr><td>${r.nome}</td><td>${r.instituicao}</td><td>${r.representacao}</td><td>${r.setor}</td><td>${r.codigo}</td></tr>`).join("");
+    }
+
+    carregarLista();
+  </script>
 </body>
 </html>

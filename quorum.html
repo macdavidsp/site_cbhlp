@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Quórum da Reunião</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -25,32 +26,41 @@
     <canvas id="graficoQuorum" width="400" height="400"></canvas>
   </main>
   <script>
-    const participantes = JSON.parse(localStorage.getItem("frequencia")) || [];
-    const total = participantes.length;
-    const metaQuorum = 10;
-    const percentual = ((total / metaQuorum) * 100).toFixed(0);
-    document.getElementById("total").textContent = total;
-    document.getElementById("percentual").textContent = percentual;
-    const restante = Math.max(metaQuorum - total, 0);
-    const ctx = document.getElementById("graficoQuorum").getContext("2d");
-    new Chart(ctx, {
-      type: "doughnut",
-      data: {
-        labels: ["Presentes", "Faltantes"],
-        datasets: [{
-          data: [total, restante],
-          backgroundColor: ["#4CAF50", "#ccc"],
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { position: "bottom" },
-          title: { display: true, text: "Quórum da Reunião" }
+    const supabase = supabase.createClient(
+      'https://wdxwgtkgkhdeslmbkmnt.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHdndGtna2hkZXNsbWJrbW50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE4Nzk5NzgsImV4cCI6MjA3NzQ1NTk3OH0._UfUZYLU9tY-nmWYt88fO9sOifCugPxPfQ6rQ-d0t_M'
+    );
+
+    async function carregarQuorum() {
+      const { data: registros } = await supabase.from("presencas").select("*");
+      const total = registros.length;
+      const metaQuorum = 10;
+      const percentual = ((total / metaQuorum) * 100).toFixed(0);
+      const restante = Math.max(metaQuorum - total, 0);
+
+      document.getElementById("total").textContent = total;
+      document.getElementById("percentual").textContent = percentual;
+
+      const ctx = document.getElementById("graficoQuorum").getContext("2d");
+      new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: ["Presentes", "Faltantes"],
+          datasets: [{
+            data: [total, restante],
+            backgroundColor: ["#4CAF50", "#ccc"]
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { position: "bottom" },
+            title: { display: true, text: "Quórum da Reunião" }
+          }
         }
-      }
-    });
+      });
+    }
+
+    carregarQuorum();
   </script>
 </body>
 </html>

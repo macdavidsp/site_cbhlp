@@ -1,82 +1,52 @@
-function gerarCodigoVerificacao(cpf) {
-  return "ID-" + btoa(cpf).slice(0, 8);
-}
+const supabase = supabase.createClient(
+  'https://wdxwgtkgkhdeslmbkmnt.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHdndGtna2hkZXNsbWJrbW50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE4Nzk5NzgsImV4cCI6MjA3NzQ1NTk3OH0._UfUZYLU9tY-nmWYt88fO9sOifCugPxPfQ6rQ-d0t_M'
+);
 
-function exportarCSV() {
-  const dados = JSON.parse(localStorage.getItem("frequencia")) || [];
-  if (dados.length === 0) {
-    alert("Nenhum dado para exportar.");
-    return;
-  }
-
-  const cabecalho = "Nome,Entidade,Representação,Setor,Código de Verificação";
-  const linhas = dados.map(p => {
-    const codigo = gerarCodigoVerificacao(p.cpf);
-    return `${p.nome},${p.instituicao},${p.representacao},${p.setor},${codigo}`;
-  });
-
+async function exportarCSV() {
+  const { data: registros } = await supabase.from("presencas").select("*");
+  const cabecalho = "Nome,Entidade,Representação,Setor,Código";
+  const linhas = registros.map(r => `${r.nome},${r.instituicao},${r.representacao},${r.setor},${r.codigo}`);
   const csv = [cabecalho, ...linhas].join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = "frequencia.csv";
-  document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
 }
 
-function exportarPDF() {
-  const dados = JSON.parse(localStorage.getItem("frequencia")) || [];
-  if (dados.length === 0) {
-    alert("Nenhum dado para exportar.");
-    return;
-  }
-
+async function exportarPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
+  const { data: registros } = await supabase.from("presencas").select("*");
 
-  // Título e subtítulo
   doc.setFontSize(16);
   doc.text("Comitê de Bacia do Lago de Palmas - CBHLP", 10, 15);
   doc.setFontSize(12);
   doc.text("Lista de Frequência da Reunião Ordinária", 10, 23);
 
-  // Data atual
   const hoje = new Date();
-  const dia = String(hoje.getDate()).padStart(2, "0");
-  const mes = String(hoje.getMonth() + 1).padStart(2, "0");
-  const ano = hoje.getFullYear();
-  const dataFormatada = `${dia}/${mes}/${ano}`;
+  const data = `${hoje.getDate().toString().padStart(2, '0')}/${(hoje.getMonth()+1).toString().padStart(2, '0')}/${hoje.getFullYear()}`;
   doc.setFontSize(10);
-  doc.text(`Data da assinatura: ${dataFormatada}`, 10, 30);
+  doc.text(`Data da assinatura: ${data}`, 10, 30);
 
-  // Cabeçalho da tabela
   let y = 40;
-  doc.setFontSize(10);
   doc.text("Nome", 10, y);
   doc.text("Entidade", 60, y);
   doc.text("Representação", 110, y);
   doc.text("Setor", 150, y);
   doc.text("Código", 180, y);
-
   y += 8;
 
-  // Linhas da tabela
-  dados.forEach((p, i) => {
-    const codigo = gerarCodigoVerificacao(p.cpf);
-    doc.text(p.nome, 10, y);
-    doc.text(p.instituicao, 60, y);
-    doc.text(p.representacao, 110, y);
-    doc.text(p.setor, 150, y);
-    doc.text(codigo, 180, y);
+  registros.forEach(r => {
+    doc.text(r.nome, 10, y);
+    doc.text(r.instituicao, 60, y);
+    doc.text(r.representacao, 110, y);
+    doc.text(r.setor, 150, y);
+    doc.text(r.codigo, 180, y);
     y += 8;
-    if (y > 270) {
-      doc.addPage();
-      y = 20;
-    }
   });
 
-  // Rodapé com link de verificação
   y += 10;
   doc.setFontSize(9);
   doc.text("Assinaturas podem ser verificadas em:", 10, y);

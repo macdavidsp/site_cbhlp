@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Verificação de Assinatura</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
   <header>
@@ -26,19 +27,9 @@
     <p id="resultado"></p>
   </main>
   <script>
-    function gerarCodigoVerificacao(cpf) {
-      return "ID-" + btoa(cpf).slice(0, 8);
-    }
+    const supabase = supabase.createClient(
+      'https://wdxwgtkgkhdeslmbkmnt.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHdndGtna2hkZXNsbWJrbW50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE4Nzk5NzgsImV4cCI6MjA3NzQ1NTk3OH0._UfUZYLU9tY-nmWYt88fO9sOifCugPxPfQ6rQ-d0t_M'
+    );
 
-    document.getElementById("verificarForm").addEventListener("submit", function(e) {
-      e.preventDefault();
-      const codigo = new FormData(this).get("codigo");
-      const dados = JSON.parse(localStorage.getItem("frequencia")) || [];
-      const encontrado = dados.find(p => gerarCodigoVerificacao(p.cpf) === codigo);
-      document.getElementById("resultado").textContent = encontrado
-        ? `Assinatura válida: ${encontrado.nome}, ${encontrado.instituicao}, ${encontrado.setor}`
-        : "Código não encontrado ou inválido.";
-    });
-  </script>
-</body>
-</html>
+    document.getElementBy
