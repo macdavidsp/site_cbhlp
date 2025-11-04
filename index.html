@@ -2,14 +2,49 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>CBHLP - Registro de Presença</title>
+  <title>Presença CBHLP</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    main {
+      text-align: center;
+      margin-top: 50px;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #00796b;
+    }
+
+    p {
+      font-size: 1.1em;
+      max-width: 600px;
+      margin: 0 auto 30px;
+    }
+
+    .botoes a {
+      display: inline-block;
+      margin: 10px;
+      padding: 12px 20px;
+      background-color: #00796b;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+
+    .botoes a:hover {
+      background-color: #004d40;
+    }
+
+    .logo {
+      max-width: 200px;
+      margin-bottom: 20px;
+    }
+  </style>
 </head>
 <body>
   <header>
-    <div class="logo-destaque">
-      <img src="logo.png" alt="Logo CBHLP" class="logo-grande" />
-      </div>
+    <h1>Presença CBHLP</h1>
     <nav>
       <ul>
         <li><a href="index.html">Início</a></li>
@@ -21,7 +56,17 @@
     </nav>
   </header>
   <main>
-    <p>Bem-vindo ao sistema de registro de Fequência ON-LINE</p>
+    <img src="logo_cbhlp.png" alt="Logo CBHLP" class="logo" />
+    <h2>Bem-vindo ao sistema de registro de presença do CBHLP</h2>
+    <p>
+      Este sistema foi desenvolvido para facilitar o registro, verificação e acompanhamento da presença dos representantes durante as reuniões do Comitê da Bacia Hidrográfica do Lago de Palmas.
+    </p>
+    <div class="botoes">
+      <a href="cadastro.html">Registrar Presença</a>
+      <a href="verificar.html">Verificar Presença</a>
+      <a href="quorum.html">Ver Quórum</a>
+      <a href="admin.html">Painel Admin</a>
+    </div>
   </main>
 </body>
 </html>
