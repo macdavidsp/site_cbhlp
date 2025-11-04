@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <title>Registro de Presença</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="supabase.js"></script>
 </head>
 <body>
   <header>
@@ -21,69 +19,39 @@
     </nav>
   </header>
   <main>
-    <h2>Preencha seus dados</h2>
-    <form id="cadastroForm">
+    <form id="formPresenca">
       <input type="text" name="nome" placeholder="Nome completo" required />
       <input type="text" name="cpf" placeholder="CPF" required />
       <input type="text" name="instituicao" placeholder="Instituição" required />
-      <select name="setor" required>
-        <option value="">Setor</option>
-        <option value="Usuário">Usuário</option>
-        <option value="Poder Público">Poder Público</option>
-        <option value="Sociedade Civil">Sociedade Civil</option>
-      </select>
-      <select name="representacao" required>
-        <option value="">Representação</option>
-        <option value="Titular">Titular</option>
-        <option value="Suplente">Suplente</option>
-      </select>
-      <button type="submit">Confirmar Presença</button>
+      <input type="text" name="setor" placeholder="Setor" required />
+      <input type="text" name="representacao" placeholder="Representação" required />
+      <button type="submit">Registrar Presença</button>
     </form>
     <p id="mensagem"></p>
   </main>
 
   <script>
-    async function getReuniaoAtiva() {
-      const { data, error } = await supabase
-        .from("reunioes")
-        .select("data_reuniao")
-        .eq("ativa", true)
-        .single();
-      return data?.data_reuniao || null;
-    }
+    const form = document.getElementById("formPresenca");
+    const mensagem = document.getElementById("mensagem");
 
-    document.getElementById("cadastroForm").addEventListener("submit", async function(e) {
+    form.addEventListener("submit", async function(e) {
       e.preventDefault();
-      const dataReuniao = await getReuniaoAtiva();
-      const mensagem = document.getElementById("mensagem");
+      const dados = Object.fromEntries(new FormData(form));
+      dados.data = new Date().toISOString().split("T")[0];
+      dados.codigo = Math.random().toString(36).substring(2, 10);
 
-      if (!dataReuniao) {
-        mensagem.textContent = "Nenhuma reunião ativa no momento.";
-        mensagem.style.color = "red";
-        return;
-      }
+      const resposta = await fetch("https://script.google.com/macros/s/AKfycbxlxiuVdashA7ScizB1NuTzIYhVpDu-dkB4GBEnY6lQxiaqQy7IwD_f756KwoOGKkG_/exec", {
+        method: "POST",
+        body: JSON.stringify(dados)
+      });
 
-      const dados = Object.fromEntries(new FormData(this));
-      const cpf = dados.cpf.replace(/\D/g, "");
-      const codigo = "ID-" + btoa(cpf).slice(0, 8);
-
-      const { error } = await supabase.from("presencas").insert([{
-        nome: dados.nome,
-        cpf: cpf,
-        instituicao: dados.instituicao,
-        setor: dados.setor,
-        representacao: dados.representacao,
-        data_reuniao: dataReuniao,
-        codigo: codigo
-      }]);
-
-      if (error) {
-        mensagem.textContent = "Erro ao registrar presença.";
-        mensagem.style.color = "red";
-      } else {
-        mensagem.innerHTML = `✅ Presença confirmada!<br>Código de validação: <strong>${codigo}</strong>`;
+      if (resposta.ok) {
+        mensagem.textContent = "✅ Presença registrada com sucesso!";
         mensagem.style.color = "green";
-        this.reset();
+        form.reset();
+      } else {
+        mensagem.textContent = "❌ Erro ao registrar presença.";
+        mensagem.style.color = "red";
       }
     });
   </script>

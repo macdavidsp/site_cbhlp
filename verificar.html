@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <title>Verificar Presença</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="supabase.js"></script>
 </head>
 <body>
   <header>
@@ -21,38 +19,31 @@
     </nav>
   </header>
   <main>
-    <h2>Digite seu código de validação</h2>
-    <form id="verificarForm">
-      <input type="text" name="codigo" placeholder="Código de validação" required />
+    <form id="formVerificar">
+      <input type="text" name="cpf" placeholder="Digite seu CPF" required />
       <button type="submit">Verificar</button>
     </form>
-    <div id="resultado"></div>
+    <p id="resultado"></p>
   </main>
 
   <script>
-    document.getElementById("verificarForm").addEventListener("submit", async function(e) {
-      e.preventDefault();
-      const codigo = new FormData(this).get("codigo");
-      const { data, error } = await supabase
-        .from("presencas")
-        .select("*")
-        .eq("codigo", codigo)
-        .single();
+    const form = document.getElementById("formVerificar");
+    const resultado = document.getElementById("resultado");
 
-      const resultado = document.getElementById("resultado");
-      if (error || !data) {
-        resultado.textContent = "Código não encontrado.";
-        resultado.style.color = "red";
-      } else {
-        resultado.innerHTML = `
-          <p><strong>Presença confirmada!</strong></p>
-          <p>Nome: ${data.nome}</p>
-          <p>Instituição: ${data.instituicao}</p>
-          <p>Setor: ${data.setor}</p>
-          <p>Representação: ${data.representacao}</p>
-          <p>Data da reunião: ${data.data_reuniao}</p>
-        `;
+    form.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const cpf = new FormData(form).get("cpf");
+      const res = await fetch("https://script.google.com/macros/s/AKfycbxlxiuVdashA7ScizB1NuTzIYhVpDu-dkB4GBEnY6lQxiaqQy7IwD_f756KwoOGKkG_/exec");
+      const dados = await res.json();
+      const presencas = dados.slice(1); // ignora cabeçalho
+      const encontrado = presencas.find(p => p[2] === cpf);
+
+      if (encontrado) {
+        resultado.textContent = `✅ Presença confirmada: ${encontrado[1]} (${encontrado[3]})`;
         resultado.style.color = "green";
+      } else {
+        resultado.textContent = "❌ CPF não encontrado.";
+        resultado.style.color = "red";
       }
     });
   </script>

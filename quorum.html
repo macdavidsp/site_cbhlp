@@ -2,11 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Quórum da Reunião</title>
+  <title>Quórum</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="supabase.js"></script>
 </head>
 <body>
   <header>
@@ -22,58 +19,27 @@
     </nav>
   </header>
   <main>
-    <h2>Presenças registradas</h2>
-    <canvas id="graficoQuorum" width="400" height="200"></canvas>
-    <p id="statusQuorum"></p>
+    <button onclick="calcularQuorum()">Calcular Quórum</button>
+    <ul id="resultadoQuorum"></ul>
   </main>
 
   <script>
-    async function getReuniaoAtiva() {
-      const { data } = await supabase
-        .from("reunioes")
-        .select("data_reuniao")
-        .eq("ativa", true)
-        .single();
-      return data?.data_reuniao || null;
-    }
+    async function calcularQuorum() {
+      const res = await fetch("https://script.google.com/macros/s/AKfycbxlxiuVdashA7ScizB1NuTzIYhVpDu-dkB4GBEnY6lQxiaqQy7IwD_f756KwoOGKkG_/exec");
+      const dados = await res.json();
+      const presencas = dados.slice(1); // ignora cabeçalho
 
-    async function contarPresencas(dataReuniao) {
-      const { data } = await supabase
-        .from("presencas")
-        .select("id")
-        .eq("data_reuniao", dataReuniao);
-      return data.length;
-    }
-
-    async function gerarGrafico() {
-      const dataReuniao = await getReuniaoAtiva();
-      const total = await contarPresencas(dataReuniao);
-      const ctx = document.getElementById("graficoQuorum").getContext("2d");
-
-      new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: ["Presenças", "Quórum mínimo"],
-          datasets: [{
-            label: "Participantes",
-            data: [total, 15],
-            backgroundColor: ["#004d99", "#999"]
-          }]
-        },
-        options: {
-          scales: {
-            y: { beginAtZero: true }
-          }
-        }
+      const setores = {};
+      presencas.forEach(p => {
+        const setor = p[4];
+        setores[setor] = (setores[setor] || 0) + 1;
       });
 
-      const status = document.getElementById("statusQuorum");
-      status.textContent = total >= 15
-        ? "✅ Quórum atingido!"
-        : `⚠️ Apenas ${total} participantes. Quórum mínimo é 15.`;
+      const lista = document.getElementById("resultadoQuorum");
+      lista.innerHTML = Object.entries(setores)
+        .map(([setor, total]) => `<li>${setor}: ${total} presentes</li>`)
+        .join("");
     }
-
-    gerarGrafico();
   </script>
 </body>
 </html>

@@ -1,38 +1,54 @@
-body {
-  font-family: Arial, sans-serif;
+/* Reset básico */
+* {
   margin: 0;
   padding: 0;
-  background: #f5f5f5;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f4f4f4;
   color: #333;
+  line-height: 1.6;
+  padding: 20px;
 }
 
 header {
-  background: #004d99;
-  color: white;
-  padding: 20px;
+  background-color: #004d40;
+  color: #fff;
+  padding: 20px 0;
   text-align: center;
+  margin-bottom: 20px;
+}
+
+header h1 {
+  margin-bottom: 10px;
 }
 
 nav ul {
   list-style: none;
-  padding: 0;
-  margin: 10px 0;
   display: flex;
   justify-content: center;
-  gap: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
 nav a {
-  color: white;
+  color: #fff;
   text-decoration: none;
   font-weight: bold;
 }
 
+nav a:hover {
+  text-decoration: underline;
+}
+
 main {
+  max-width: 700px;
+  margin: 0 auto;
+  background: #fff;
   padding: 20px;
-  max-width: 800px;
-  margin: auto;
-  background: white;
+  border-radius: 8px;
   box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
@@ -44,23 +60,32 @@ form {
 
 input, select, button {
   padding: 10px;
-  font-size: 16px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
 }
 
 button {
-  background: #004d99;
+  background-color: #00796b;
   color: white;
-  border: none;
   cursor: pointer;
+  transition: background 0.3s ease;
 }
 
 button:hover {
-  background: #003366;
+  background-color: #004d40;
 }
 
-footer {
-  text-align: center;
-  padding: 10px;
-  background: #eee;
-  margin-top: 20px;
+ul {
+  margin-top: 15px;
+  padding-left: 20px;
+}
+
+li {
+  margin-bottom: 5px;
+}
+
+p {
+  margin-top: 10px;
+  font-weight: bold;
 }

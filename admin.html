@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <title>Administração</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="supabase.js"></script>
 </head>
 <body>
   <header>
@@ -32,22 +30,10 @@
     </div>
 
     <div id="adminArea" style="display:none;">
-      <h2>Reunião Ativa</h2>
-      <button onclick="registrarReuniao()">Registrar nova reunião</button>
-      <p id="reuniaoStatus"></p>
-
-      <h2>Presenças da reunião atual</h2>
+      <h2>Presenças registradas</h2>
       <ul id="listaPresencas"></ul>
-
-      <h2>Exportar lista da reunião atual</h2>
       <button onclick="exportarCSV()">Exportar CSV</button>
       <button onclick="exportarPDF()">Exportar PDF</button>
-
-      <h2>Consultar reuniões anteriores</h2>
-      <select id="reunioesPassadas" onchange="listarPresencasPassadas(this.value)">
-        <option value="">Selecione uma data</option>
-      </select>
-      <ul id="listaPassada"></ul>
     </div>
   </main>
 
@@ -56,7 +42,8 @@
     const loginMensagem = document.getElementById("loginMensagem");
     const loginArea = document.getElementById("loginArea");
     const adminArea = document.getElementById("adminArea");
-    let listaAtual = [];
+    const listaPresencas = document.getElementById("listaPresencas");
+    let presencas = [];
 
     loginForm.addEventListener("submit", function(e) {
       e.preventDefault();
@@ -64,98 +51,26 @@
       if (dados.usuario === "admin" && dados.senha === "cbhlp2025") {
         loginArea.style.display = "none";
         adminArea.style.display = "block";
-        carregarAdmin();
+        carregarPresencas();
       } else {
         loginMensagem.textContent = "Usuário ou senha incorretos.";
         loginMensagem.style.color = "red";
       }
     });
 
-    async function registrarReuniao() {
-      const hoje = new Date().toISOString().split("T")[0];
-      const status = document.getElementById("reuniaoStatus");
-
-      const { error: erroDesativar } = await supabase
-        .from("reunioes")
-        .update({ ativa: false })
-        .eq("ativa", true);
-
-      if (erroDesativar) {
-        status.textContent = "Erro ao desativar reunião anterior.";
-        status.style.color = "red";
-        return;
-      }
-
-      const { error: erroInserir } = await supabase
-        .from("reunioes")
-        .insert([{ data_reuniao: hoje, ativa: true }]);
-
-      if (erroInserir) {
-        status.textContent = "Erro ao registrar nova reunião.";
-        status.style.color = "red";
-      } else {
-        status.textContent = `✅ Reunião registrada para ${hoje}`;
-        status.style.color = "green";
-        carregarAdmin();
-      }
-    }
-
-    async function carregarAdmin() {
-      const { data: ativa } = await supabase
-        .from("reunioes")
-        .select("data_reuniao")
-        .eq("ativa", true)
-        .single();
-
-      const dataAtual = ativa?.data_reuniao;
-      const status = document.getElementById("reuniaoStatus");
-      status.textContent = dataAtual
-        ? `Reunião ativa: ${dataAtual}`
-        : "Nenhuma reunião ativa.";
-      status.style.color = dataAtual ? "green" : "orange";
-
-      const { data: presencas } = await supabase
-        .from("presencas")
-        .select("*")
-        .eq("data_reuniao", dataAtual);
-
-      listaAtual = presencas;
-
-      const lista = document.getElementById("listaPresencas");
-      lista.innerHTML = presencas.map(p =>
-        `<li>${p.nome} (${p.instituicao}) - ${p.setor} / ${p.representacao}</li>`
-      ).join("");
-
-      const { data: reunioes } = await supabase
-        .from("reunioes")
-        .select("data_reuniao")
-        .order("data_reuniao", { ascending: false });
-
-      const select = document.getElementById("reunioesPassadas");
-      select.innerHTML = `<option value="">Selecione uma data</option>` +
-        reunioes.map(r =>
-          `<option value="${r.data_reuniao}">${r.data_reuniao}</option>`
-        ).join("");
-    }
-
-    async function listarPresencasPassadas(data) {
-      const { data: presencas } = await supabase
-        .from("presencas")
-        .select("*")
-        .eq("data_reuniao", data);
-
-      const lista = document.getElementById("listaPassada");
-      lista.innerHTML = presencas.map(p =>
-        `<li>${p.nome} (${p.instituicao}) - ${p.setor} / ${p.representacao}</li>`
+    async function carregarPresencas() {
+      const resposta = await fetch("https://script.google.com/macros/s/AKfycbxlxiuVdashA7ScizB1NuTzIYhVpDu-dkB4GBEnY6lQxiaqQy7IwD_f756KwoOGKkG_/exec");
+      const dados = await resposta.json();
+      presencas = dados.slice(1); // ignora cabeçalho
+      listaPresencas.innerHTML = presencas.map(p =>
+        `<li>${p[1]} (${p[3]}) - ${p[4]} / ${p[5]}</li>`
       ).join("");
     }
 
     function exportarCSV() {
-      if (listaAtual.length === 0) return alert("Nenhuma presença registrada.");
-      const cabecalho = ["Nome", "CPF", "Instituição", "Setor", "Representação", "Data"];
-      const linhas = listaAtual.map(p =>
-        [p.nome, p.cpf, p.instituicao, p.setor, p.representacao, p.data_reuniao].join(",")
-      );
+      if (presencas.length === 0) return alert("Nenhuma presença registrada.");
+      const cabecalho = ["Data", "Nome", "CPF", "Instituição", "Setor", "Representação", "Código"];
+      const linhas = presencas.map(p => p.join(","));
       const csv = [cabecalho.join(","), ...linhas].join("\n");
       const blob = new Blob([csv], { type: "text/csv" });
       const link = document.createElement("a");
@@ -165,11 +80,11 @@
     }
 
     function exportarPDF() {
-      if (listaAtual.length === 0) return alert("Nenhuma presença registrada.");
+      if (presencas.length === 0) return alert("Nenhuma presença registrada.");
       const janela = window.open("", "", "width=800,height=600");
       janela.document.write("<h1>Lista de Presença</h1><ul>");
-      listaAtual.forEach(p => {
-        janela.document.write(`<li>${p.nome} (${p.instituicao}) - ${p.setor} / ${p.representacao}</li>`);
+      presencas.forEach(p => {
+        janela.document.write(`<li>${p[1]} (${p[3]}) - ${p[4]} / ${p[5]}</li>`);
       });
       janela.document.write("</ul>");
       janela.document.close();
