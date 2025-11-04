@@ -2,8 +2,30 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Quórum</title>
+  <title>Quórum da Reunião</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f0f0f0;
+    }
+
+    #status {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -19,27 +41,75 @@
     </nav>
   </header>
   <main>
-    <button onclick="calcularQuorum()">Calcular Quórum</button>
-    <ul id="resultadoQuorum"></ul>
+    <p id="status">🔄 Calculando quórum...</p>
+    <table id="tabelaQuorum">
+      <thead>
+        <tr>
+          <th>Setor</th>
+          <th>Titulares</th>
+          <th>Suplentes</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </main>
 
   <script>
+    const tabela = document.querySelector("#tabelaQuorum tbody");
+    const status = document.getElementById("status");
+    const API_URL = "https://script.google.com/macros/s/AKfycbxlxiuVdashA7ScizB1NuTzIYhVpDu-dkB4GBEnY6lQxiaqQy7IwD_f756KwoOGKkG_/exec";
+
     async function calcularQuorum() {
-      const res = await fetch("https://script.google.com/macros/s/AKfycbxlxiuVdashA7ScizB1NuTzIYhVpDu-dkB4GBEnY6lQxiaqQy7IwD_f756KwoOGKkG_/exec");
-      const dados = await res.json();
-      const presencas = dados.slice(1); // ignora cabeçalho
+      try {
+        const res = await fetch(API_URL);
+        const dados = await res.json();
+        const hoje = new Date().toISOString().split("T")[0];
+        const presencasHoje = dados.filter(p => p[0] === hoje);
 
-      const setores = {};
-      presencas.forEach(p => {
-        const setor = p[4];
-        setores[setor] = (setores[setor] || 0) + 1;
-      });
+        if (presencasHoje.length === 0) {
+          status.textContent = "⚠️ Nenhuma presença registrada hoje.";
+          return;
+        }
 
-      const lista = document.getElementById("resultadoQuorum");
-      lista.innerHTML = Object.entries(setores)
-        .map(([setor, total]) => `<li>${setor}: ${total} presentes</li>`)
-        .join("");
+        const setores = ["Usuário", "Sociedade Civil", "Poder Público"];
+        const contagem = {};
+
+        setores.forEach(setor => {
+          contagem[setor] = { Titular: 0, Suplente: 0 };
+        });
+
+        presencasHoje.forEach(p => {
+          const setor = p[4];
+          const representacao = p[5];
+          if (contagem[setor]) {
+            contagem[setor][representacao]++;
+          }
+        });
+
+        setores.forEach(setor => {
+          const t = contagem[setor].Titular;
+          const s = contagem[setor].Suplente;
+          const linha = document.createElement("tr");
+          linha.innerHTML = `
+            <td>${setor}</td>
+            <td>${t}</td>
+            <td>${s}</td>
+            <td>${t + s}</td>
+          `;
+          tabela.appendChild(linha);
+        });
+
+        const total = presencasHoje.length;
+        status.textContent = `✅ Total de presentes hoje: ${total}`;
+        status.style.color = "green";
+      } catch (err) {
+        status.textContent = "❌ Erro ao calcular o quórum.";
+        status.style.color = "red";
+      }
     }
+
+    calcularQuorum();
   </script>
 </body>
 </html>

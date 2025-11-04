@@ -2,8 +2,30 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Administração</title>
+  <title>Painel Administrativo</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f0f0f0;
+    }
+
+    #status {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -19,79 +41,61 @@
     </nav>
   </header>
   <main>
-    <div id="loginArea">
-      <h2>Login do Administrador</h2>
-      <form id="loginForm">
-        <input type="text" name="usuario" placeholder="Usuário" required />
-        <input type="password" name="senha" placeholder="Senha" required />
-        <button type="submit">Entrar</button>
-      </form>
-      <p id="loginMensagem"></p>
-    </div>
-
-    <div id="adminArea" style="display:none;">
-      <h2>Presenças registradas hoje</h2>
-      <ul id="listaPresencas"></ul>
-      <button onclick="exportarCSV()">Exportar CSV</button>
-      <button onclick="exportarPDF()">Exportar PDF</button>
-    </div>
+    <p id="status">🔄 Carregando registros de hoje...</p>
+    <table id="tabelaPresencas">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>CPF</th>
+          <th>Instituição</th>
+          <th>Setor</th>
+          <th>Representação</th>
+          <th>Código</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </main>
 
   <script>
-    const loginForm = document.getElementById("loginForm");
-    const loginMensagem = document.getElementById("loginMensagem");
-    const loginArea = document.getElementById("loginArea");
-    const adminArea = document.getElementById("adminArea");
-    const listaPresencas = document.getElementById("listaPresencas");
+    const tabela = document.querySelector("#tabelaPresencas tbody");
+    const status = document.getElementById("status");
     const API_URL = "https://script.google.com/macros/s/AKfycbxlxiuVdashA7ScizB1NuTzIYhVpDu-dkB4GBEnY6lQxiaqQy7IwD_f756KwoOGKkG_/exec";
-    let presencas = [];
-
-    loginForm.addEventListener("submit", function(e) {
-      e.preventDefault();
-      const dados = Object.fromEntries(new FormData(this));
-      if (dados.usuario === "admin" && dados.senha === "cbhlp2025") {
-        loginArea.style.display = "none";
-        adminArea.style.display = "block";
-        carregarPresencas();
-      } else {
-        loginMensagem.textContent = "Usuário ou senha incorretos.";
-        loginMensagem.style.color = "red";
-      }
-    });
 
     async function carregarPresencas() {
-      const hoje = new Date().toISOString().split("T")[0];
-      const resposta = await fetch(API_URL);
-      const dados = await resposta.json();
-      presencas = dados.slice(1).filter(p => p[0] === hoje);
-      listaPresencas.innerHTML = presencas.map(p =>
-        `<li>${p[1]} (${p[3]}) - ${p[4]} / ${p[5]}</li>`
-      ).join("");
+      try {
+        const res = await fetch(API_URL);
+        const dados = await res.json();
+        const hoje = new Date().toISOString().split("T")[0];
+        const presencasHoje = dados.filter(p => p[0] === hoje);
+
+        if (presencasHoje.length === 0) {
+          status.textContent = "⚠️ Nenhuma presença registrada hoje.";
+          return;
+        }
+
+        presencasHoje.forEach(p => {
+          const linha = document.createElement("tr");
+          linha.innerHTML = `
+            <td>${p[1]}</td>
+            <td>${p[2]}</td>
+            <td>${p[3]}</td>
+            <td>${p[4]}</td>
+            <td>${p[5]}</td>
+            <td>${p[6]}</td>
+          `;
+          tabela.appendChild(linha);
+        });
+
+        status.textContent = `✅ Total de presenças hoje: ${presencasHoje.length}`;
+        status.style.color = "green";
+      } catch (err) {
+        status.textContent = "❌ Erro ao carregar os dados.";
+        status.style.color = "red";
+      }
     }
 
-    function exportarCSV() {
-      if (presencas.length === 0) return alert("Nenhuma presença registrada.");
-      const cabecalho = ["Data", "Nome", "CPF", "Instituição", "Setor", "Representação", "Código"];
-      const linhas = presencas.map(p => p.join(","));
-      const csv = [cabecalho.join(","), ...linhas].join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "presencas.csv";
-      link.click();
-    }
-
-    function exportarPDF() {
-      if (presencas.length === 0) return alert("Nenhuma presença registrada.");
-      const janela = window.open("", "", "width=800,height=600");
-      janela.document.write("<h1>Lista de Presença</h1><ul>");
-      presencas.forEach(p => {
-        janela.document.write(`<li>${p[1]} (${p[3]}) - ${p[4]} / ${p[5]}</li>`);
-      });
-      janela.document.write("</ul>");
-      janela.document.close();
-      janela.print();
-    }
+    carregarPresencas();
   </script>
 </body>
 </html>

@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <title>Verificar Presença</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    #resultado {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -33,20 +39,25 @@
 
     form.addEventListener("submit", async function(e) {
       e.preventDefault();
-      const cpf = new FormData(form).get("cpf");
+      const cpf = new FormData(form).get("cpf").trim();
       const hoje = new Date().toISOString().split("T")[0];
 
-      const res = await fetch(API_URL);
-      const dados = await res.json();
-      const presencas = dados.slice(1);
-      const encontrado = presencas.find(p => p[2] === cpf && p[0] === hoje);
+      try {
+        const res = await fetch(API_URL);
+        const dados = await res.json();
+        const presencas = dados.filter(p => p[0] === hoje && p[2] === cpf);
 
-      if (encontrado) {
-        resultado.textContent = `✅ Presença confirmada: ${encontrado[1]} (${encontrado[3]})`;
-        resultado.style.color = "green";
-      } else {
-        resultado.textContent = "❌ Nenhum registro encontrado para hoje.";
-        resultado.style.color = "red";
+        if (presencas.length > 0) {
+          const pessoa = presencas[0];
+          resultado.textContent = `✅ Presença confirmada: ${pessoa[1]} (${pessoa[3]}) - ${pessoa[4]} / ${pessoa[5]}`;
+          resultado.style.color = "green";
+        } else {
+          resultado.textContent = "❌ Nenhum registro encontrado para hoje.";
+          resultado.style.color = "red";
+        }
+      } catch (err) {
+        resultado.textContent = "⚠️ Erro ao verificar presença.";
+        resultado.style.color = "orange";
       }
     });
   </script>
