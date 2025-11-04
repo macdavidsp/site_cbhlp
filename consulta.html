@@ -2,8 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Consulta de Presenças</title>
+  <title>Consulta por Data</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
@@ -13,19 +12,21 @@
       <ul>
         <li><a href="index.html">INICIAL</a></li>
         <li><a href="cadastro.html">REGISTRO</a></li>
-        <li><a href="consulta.html">CONSULTA</a></li>
         <li><a href="quorum.html">QUORUM</a></li>
         <li><a href="verificar.html">VERIFICAÇÃO</a></li>
         <li><a href="admin.html">ADMIN</a></li>
+        <li><a href="consulta.html">CONSULTA</a></li>
       </ul>
     </nav>
   </header>
-
   <main>
     <h2>Consulta de Presenças por Data</h2>
-    <input type="date" id="dataBusca" />
-    <button onclick="buscar()">Buscar</button>
-    <table id="tabela"></table>
+    <form id="consultaForm">
+      <input type="date" name="data" required />
+      <button type="submit">Consultar</button>
+    </form>
+    <p id="statusConsulta"></p>
+    <table id="tabelaConsulta"></table>
   </main>
 
   <script>
@@ -34,25 +35,33 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHdndGtna2hkZXNsbWJrbW50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE4Nzk5NzgsImV4cCI6MjA3NzQ1NTk3OH0._UfUZYLU9tY-nmWYt88fO9sOifCugPxPfQ6rQ-d0t_M'
     );
 
-    async function buscar() {
-      const data = document.getElementById("dataBusca").value;
-      const { data: registros, error } = await supabase
+    document.getElementById("consultaForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const dataSelecionada = new FormData(this).get("data");
+      document.getElementById("statusConsulta").textContent = "Consultando...";
+
+      const { data, error } = await supabase
         .from("presencas")
         .select("*")
-        .eq("data_reuniao", data);
+        .eq("data_reuniao", dataSelecionada)
+        .order("nome", { ascending: true });
 
-      const tabela = document.getElementById("tabela");
       if (error) {
-        tabela.innerHTML = "<tr><td>Erro ao buscar dados.</td></tr>";
+        document.getElementById("statusConsulta").textContent = "Erro: " + error.message;
         return;
       }
-      if (!registros || registros.length === 0) {
-        tabela.innerHTML = "<tr><td>Nenhum registro encontrado.</td></tr>";
+
+      if (!data || data.length === 0) {
+        document.getElementById("statusConsulta").textContent = "Nenhum registro encontrado para esta data.";
+        document.getElementById("tabelaConsulta").innerHTML = "";
         return;
       }
-      tabela.innerHTML = "<tr><th>Nome</th><th>Instituição</th><th>Representação</th><th>Setor</th><th>Código</th></tr>" +
-        registros.map(r => `<tr><td>${r.nome}</td><td>${r.instituicao}</td><td>${r.representacao}</td><td>${r.setor}</td><td>${r.codigo}</td></tr>`).join("");
-    }
+
+      document.getElementById("statusConsulta").textContent = `Total de registros: ${data.length}`;
+      const tabela = document.getElementById("tabelaConsulta");
+      tabela.innerHTML = "<tr><th>Nome</th><th>Entidade</th><th>Representação</th><th>Setor</th><th>Código</th></tr>" +
+        data.map(r => `<tr><td>${r.nome}</td><td>${r.instituicao}</td><td>${r.representacao}</td><td>${r.setor}</td><td>${r.codigo}</td></tr>`).join("");
+    });
   </script>
 </body>
 </html>

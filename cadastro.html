@@ -37,7 +37,7 @@
       </select>
       <button type="submit">Registrar Presença</button>
     </form>
-    <p id="mensagem"></p>
+    <p id="mensagem" style="margin-top: 20px; font-weight: bold;"></p>
   </main>
 
   <script>
@@ -62,10 +62,15 @@
         codigo: codigo
       }]);
 
-      document.getElementById("mensagem").textContent = error
-        ? "Erro: " + error.message
-        : "Presença registrada com sucesso!";
-      if (!error) this.reset();
+      const mensagem = document.getElementById("mensagem");
+      if (error) {
+        mensagem.textContent = "Erro ao registrar presença: " + error.message;
+        mensagem.style.color = "red";
+      } else {
+        mensagem.innerHTML = `✅ <strong>SUA PRESENÇA FOI CONFIRMADA</strong><br>CÓDIGO DE VALIDAÇÃO: <strong>${codigo}</strong>`;
+        mensagem.style.color = "green";
+        this.reset();
+      }
     });
   </script>
 </body>

@@ -45,17 +45,19 @@
 
     let acessoLiberado = false;
 
-    document.getElementById("loginForm").addEventListener("submit", function(e) {
-      e.preventDefault();
-      const dados = Object.fromEntries(new FormData(this));
-      if (dados.usuario === "admin" && dados.senha === "cbhlp2025") {
-        acessoLiberado = true;
-        document.getElementById("loginStatus").textContent = "Acesso liberado!";
-        document.getElementById("painelAdmin").style.display = "block";
-        carregarLista();
-      } else {
-        document.getElementById("loginStatus").textContent = "Usuário ou senha inválidos.";
-      }
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("loginForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        const dados = Object.fromEntries(new FormData(this));
+        if (dados.usuario === "admin" && dados.senha === "cbhlp2025") {
+          acessoLiberado = true;
+          document.getElementById("loginStatus").textContent = "Acesso liberado!";
+          document.getElementById("painelAdmin").style.display = "block";
+          carregarLista();
+        } else {
+          document.getElementById("loginStatus").textContent = "Usuário ou senha inválidos.";
+        }
+      });
     });
 
     async function carregarLista() {
@@ -65,6 +67,11 @@
         .from("presencas")
         .select("*")
         .order("data_reuniao", { ascending: false });
+
+      if (error) {
+        console.error("Erro ao carregar lista:", error.message);
+        return;
+      }
 
       const tabela = document.getElementById("tabelaFrequencia");
       tabela.innerHTML = "<tr><th>Data</th><th>Nome</th><th>Entidade</th><th>Representação</th><th>Setor</th><th>Código</th></tr>" +
