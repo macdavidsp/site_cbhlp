@@ -21,25 +21,55 @@
     </nav>
   </header>
   <main>
-    <h2>Lista de Frequência</h2>
-    <table id="tabelaFrequencia"></table>
-    <button onclick="exportarCSV()">Exportar CSV</button>
-    <button onclick="exportarPDF()">Exportar PDF</button>
+    <h2>Login do Administrador</h2>
+    <form id="loginForm">
+      <input type="text" name="usuario" placeholder="Usuário" required />
+      <input type="password" name="senha" placeholder="Senha" required />
+      <button type="submit">Entrar</button>
+    </form>
+    <p id="loginStatus"></p>
+
+    <div id="painelAdmin" style="display:none;">
+      <h2>Lista de Frequência</h2>
+      <table id="tabelaFrequencia"></table>
+      <button onclick="exportarCSV()">Exportar CSV</button>
+      <button onclick="exportarPDF()">Exportar PDF</button>
+    </div>
   </main>
+
   <script>
     const supabase = supabase.createClient(
-      'https://SEU-PROJECT.supabase.co',
-      'SUA-CHAVE-PUBLICA'
+      'https://wdxwgtkgkhdeslmbkmnt.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHdndGtna2hkZXNsbWJrbW50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE4Nzk5NzgsImV4cCI6MjA3NzQ1NTk3OH0._UfUZYLU9tY-nmWYt88fO9sOifCugPxPfQ6rQ-d0t_M'
     );
 
-    async function carregarLista() {
-      const { data: registros } = await supabase.from("presencas").select("*");
-      const tabela = document.getElementById("tabelaFrequencia");
-      tabela.innerHTML = "<tr><th>Nome</th><th>Entidade</th><th>Representação</th><th>Setor</th><th>Código</th></tr>" +
-        registros.map(r => `<tr><td>${r.nome}</td><td>${r.instituicao}</td><td>${r.representacao}</td><td>${r.setor}</td><td>${r.codigo}</td></tr>`).join("");
-    }
+    let acessoLiberado = false;
 
-    carregarLista();
+    document.getElementById("loginForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const dados = Object.fromEntries(new FormData(this));
+      if (dados.usuario === "admin" && dados.senha === "cbhlp2025") {
+        acessoLiberado = true;
+        document.getElementById("loginStatus").textContent = "Acesso liberado!";
+        document.getElementById("painelAdmin").style.display = "block";
+        carregarLista();
+      } else {
+        document.getElementById("loginStatus").textContent = "Usuário ou senha inválidos.";
+      }
+    });
+
+    async function carregarLista() {
+      if (!acessoLiberado) return;
+
+      const { data: registros, error } = await supabase
+        .from("presencas")
+        .select("*")
+        .order("data_reuniao", { ascending: false });
+
+      const tabela = document.getElementById("tabelaFrequencia");
+      tabela.innerHTML = "<tr><th>Data</th><th>Nome</th><th>Entidade</th><th>Representação</th><th>Setor</th><th>Código</th></tr>" +
+        registros.map(r => `<tr><td>${r.data_reuniao}</td><td>${r.nome}</td><td>${r.instituicao}</td><td>${r.representacao}</td><td>${r.setor}</td><td>${r.codigo}</td></tr>`).join("");
+    }
   </script>
 </body>
 </html>

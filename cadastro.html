@@ -2,7 +2,6 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Registro de Participante</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
@@ -13,16 +12,14 @@
       <ul>
         <li><a href="index.html">INICIAL</a></li>
         <li><a href="cadastro.html">REGISTRO</a></li>
-        <li><a href="consulta.html">CONSULTA</a></li>
         <li><a href="quorum.html">QUORUM</a></li>
         <li><a href="verificar.html">VERIFICAÇÃO</a></li>
         <li><a href="admin.html">ADMIN</a></li>
       </ul>
     </nav>
   </header>
-
   <main>
-    <h2>Registro de Presença</h2>
+    <h2>Ficha Cadastral</h2>
     <form id="cadastroForm">
       <input type="text" name="nome" placeholder="Nome completo" required />
       <input type="text" name="cpf" placeholder="CPF" required />
@@ -43,7 +40,6 @@
     <p id="mensagem"></p>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
     const supabase = supabase.createClient(
       'https://wdxwgtkgkhdeslmbkmnt.supabase.co',
