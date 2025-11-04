@@ -68,30 +68,81 @@
 
     async function registrarReuniao() {
       const hoje = new Date().toISOString().split("T")[0];
-      await supabase.from("reunioes").update({ ativa: false }).eq("ativa", true);
-      const { error } = await supabase.from("reunioes").insert([{ data_reuniao: hoje, ativa: true }]);
-      document.getElementById("reuniaoStatus").textContent = error ? "Erro ao registrar reunião." : "Reunião registrada com sucesso!";
-      carregarAdmin();
+      const status = document.getElementById("reuniaoStatus");
+
+      // Desativa reunião anterior
+      const { error: erroDesativar } = await supabase
+        .from("reunioes")
+        .update({ ativa: false })
+        .eq("ativa", true);
+
+      if (erroDesativar) {
+        status.textContent = "Erro ao desativar reunião anterior.";
+        status.style.color = "red";
+        return;
+      }
+
+      // Registra nova reunião
+      const { error: erroInserir } = await supabase
+        .from("reunioes")
+        .insert([{ data_reuniao: hoje, ativa: true }]);
+
+      if (erroInserir) {
+        status.textContent = "Erro ao registrar nova reunião.";
+        status.style.color = "red";
+      } else {
+        status.textContent = `✅ Reunião registrada para ${hoje}`;
+        status.style.color = "green";
+        carregarAdmin();
+      }
     }
 
     async function carregarAdmin() {
-      const { data: ativa } = await supabase.from("reunioes").select("data_reuniao").eq("ativa", true).single();
+      const { data: ativa } = await supabase
+        .from("reunioes")
+        .select("data_reuniao")
+        .eq("ativa", true)
+        .single();
+
       const dataAtual = ativa?.data_reuniao;
-      document.getElementById("reuniaoStatus").textContent = dataAtual ? `Reunião ativa: ${dataAtual}` : "Nenhuma reunião ativa.";
+      const status = document.getElementById("reuniaoStatus");
+      status.textContent = dataAtual
+        ? `Reunião ativa: ${dataAtual}`
+        : "Nenhuma reunião ativa.";
+      status.style.color = dataAtual ? "green" : "orange";
 
-      const { data: presencas } = await supabase.from("presencas").select("*").eq("data_reuniao", dataAtual);
+      const { data: presencas } = await supabase
+        .from("presencas")
+        .select("*")
+        .eq("data_reuniao", dataAtual);
+
       const lista = document.getElementById("listaPresencas");
-      lista.innerHTML = presencas.map(p => `<li>${p.nome} (${p.instituicao}) - ${p.setor} / ${p.representacao}</li>`).join("");
+      lista.innerHTML = presencas.map(p =>
+        `<li>${p.nome} (${p.instituicao}) - ${p.setor} / ${p.representacao}</li>`
+      ).join("");
 
-      const { data: reunioes } = await supabase.from("reunioes").select("data_reuniao").order("data_reuniao", { ascending: false });
+      const { data: reunioes } = await supabase
+        .from("reunioes")
+        .select("data_reuniao")
+        .order("data_reuniao", { ascending: false });
+
       const select = document.getElementById("reunioesPassadas");
-      select.innerHTML = `<option value="">Selecione uma data</option>` + reunioes.map(r => `<option value="${r.data_reuniao}">${r.data_reuniao}</option>`).join("");
+      select.innerHTML = `<option value="">Selecione uma data</option>` +
+        reunioes.map(r =>
+          `<option value="${r.data_reuniao}">${r.data_reuniao}</option>`
+        ).join("");
     }
 
     async function listarPresencasPassadas(data) {
-      const { data: presencas } = await supabase.from("presencas").select("*").eq("data_reuniao", data);
+      const { data: presencas } = await supabase
+        .from("presencas")
+        .select("*")
+        .eq("data_reuniao", data);
+
       const lista = document.getElementById("listaPassada");
-      lista.innerHTML = presencas.map(p => `<li>${p.nome} (${p.instituicao}) - ${p.setor} / ${p.representacao}</li>`).join("");
+      lista.innerHTML = presencas.map(p =>
+        `<li>${p.nome} (${p.instituicao}) - ${p.setor} / ${p.representacao}</li>`
+      ).join("");
     }
   </script>
 </body>
