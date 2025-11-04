@@ -39,6 +39,10 @@
       <h2>Presenças da reunião atual</h2>
       <ul id="listaPresencas"></ul>
 
+      <h2>Exportar lista da reunião atual</h2>
+      <button onclick="exportarCSV()">Exportar CSV</button>
+      <button onclick="exportarPDF()">Exportar PDF</button>
+
       <h2>Consultar reuniões anteriores</h2>
       <select id="reunioesPassadas" onchange="listarPresencasPassadas(this.value)">
         <option value="">Selecione uma data</option>
@@ -52,6 +56,7 @@
     const loginMensagem = document.getElementById("loginMensagem");
     const loginArea = document.getElementById("loginArea");
     const adminArea = document.getElementById("adminArea");
+    let listaAtual = [];
 
     loginForm.addEventListener("submit", function(e) {
       e.preventDefault();
@@ -70,7 +75,6 @@
       const hoje = new Date().toISOString().split("T")[0];
       const status = document.getElementById("reuniaoStatus");
 
-      // Desativa reunião anterior
       const { error: erroDesativar } = await supabase
         .from("reunioes")
         .update({ ativa: false })
@@ -82,7 +86,6 @@
         return;
       }
 
-      // Registra nova reunião
       const { error: erroInserir } = await supabase
         .from("reunioes")
         .insert([{ data_reuniao: hoje, ativa: true }]);
@@ -116,6 +119,8 @@
         .select("*")
         .eq("data_reuniao", dataAtual);
 
+      listaAtual = presencas;
+
       const lista = document.getElementById("listaPresencas");
       lista.innerHTML = presencas.map(p =>
         `<li>${p.nome} (${p.instituicao}) - ${p.setor} / ${p.representacao}</li>`
@@ -143,6 +148,32 @@
       lista.innerHTML = presencas.map(p =>
         `<li>${p.nome} (${p.instituicao}) - ${p.setor} / ${p.representacao}</li>`
       ).join("");
+    }
+
+    function exportarCSV() {
+      if (listaAtual.length === 0) return alert("Nenhuma presença registrada.");
+      const cabecalho = ["Nome", "CPF", "Instituição", "Setor", "Representação", "Data"];
+      const linhas = listaAtual.map(p =>
+        [p.nome, p.cpf, p.instituicao, p.setor, p.representacao, p.data_reuniao].join(",")
+      );
+      const csv = [cabecalho.join(","), ...linhas].join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "presencas.csv";
+      link.click();
+    }
+
+    function exportarPDF() {
+      if (listaAtual.length === 0) return alert("Nenhuma presença registrada.");
+      const janela = window.open("", "", "width=800,height=600");
+      janela.document.write("<h1>Lista de Presença</h1><ul>");
+      listaAtual.forEach(p => {
+        janela.document.write(`<li>${p.nome} (${p.instituicao}) - ${p.setor} / ${p.representacao}</li>`);
+      });
+      janela.document.write("</ul>");
+      janela.document.close();
+      janela.print();
     }
   </script>
 </body>
