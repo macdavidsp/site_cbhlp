@@ -30,7 +30,7 @@
     </div>
 
     <div id="adminArea" style="display:none;">
-      <h2>Presenças registradas</h2>
+      <h2>Presenças registradas hoje</h2>
       <ul id="listaPresencas"></ul>
       <button onclick="exportarCSV()">Exportar CSV</button>
       <button onclick="exportarPDF()">Exportar PDF</button>
@@ -43,6 +43,7 @@
     const loginArea = document.getElementById("loginArea");
     const adminArea = document.getElementById("adminArea");
     const listaPresencas = document.getElementById("listaPresencas");
+    const API_URL = "https://script.google.com/macros/s/AKfycbxlxiuVdashA7ScizB1NuTzIYhVpDu-dkB4GBEnY6lQxiaqQy7IwD_f756KwoOGKkG_/exec";
     let presencas = [];
 
     loginForm.addEventListener("submit", function(e) {
@@ -59,9 +60,10 @@
     });
 
     async function carregarPresencas() {
-      const resposta = await fetch("https://script.google.com/macros/s/AKfycbxlxiuVdashA7ScizB1NuTzIYhVpDu-dkB4GBEnY6lQxiaqQy7IwD_f756KwoOGKkG_/exec");
+      const hoje = new Date().toISOString().split("T")[0];
+      const resposta = await fetch(API_URL);
       const dados = await resposta.json();
-      presencas = dados.slice(1); // ignora cabeçalho
+      presencas = dados.slice(1).filter(p => p[0] === hoje);
       listaPresencas.innerHTML = presencas.map(p =>
         `<li>${p[1]} (${p[3]}) - ${p[4]} / ${p[5]}</li>`
       ).join("");

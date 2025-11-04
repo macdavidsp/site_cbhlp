@@ -29,20 +29,23 @@
   <script>
     const form = document.getElementById("formVerificar");
     const resultado = document.getElementById("resultado");
+    const API_URL = "https://script.google.com/macros/s/AKfycbxlxiuVdashA7ScizB1NuTzIYhVpDu-dkB4GBEnY6lQxiaqQy7IwD_f756KwoOGKkG_/exec";
 
     form.addEventListener("submit", async function(e) {
       e.preventDefault();
       const cpf = new FormData(form).get("cpf");
-      const res = await fetch("https://script.google.com/macros/s/AKfycbxlxiuVdashA7ScizB1NuTzIYhVpDu-dkB4GBEnY6lQxiaqQy7IwD_f756KwoOGKkG_/exec");
+      const hoje = new Date().toISOString().split("T")[0];
+
+      const res = await fetch(API_URL);
       const dados = await res.json();
-      const presencas = dados.slice(1); // ignora cabeçalho
-      const encontrado = presencas.find(p => p[2] === cpf);
+      const presencas = dados.slice(1);
+      const encontrado = presencas.find(p => p[2] === cpf && p[0] === hoje);
 
       if (encontrado) {
         resultado.textContent = `✅ Presença confirmada: ${encontrado[1]} (${encontrado[3]})`;
         resultado.style.color = "green";
       } else {
-        resultado.textContent = "❌ CPF não encontrado.";
+        resultado.textContent = "❌ Nenhum registro encontrado para hoje.";
         resultado.style.color = "red";
       }
     });

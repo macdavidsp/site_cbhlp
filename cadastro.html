@@ -23,8 +23,20 @@
       <input type="text" name="nome" placeholder="Nome completo" required />
       <input type="text" name="cpf" placeholder="CPF" required />
       <input type="text" name="instituicao" placeholder="Instituição" required />
-      <input type="text" name="setor" placeholder="Setor" required />
-      <input type="text" name="representacao" placeholder="Representação" required />
+
+      <select name="setor" required>
+        <option value="">Selecione o setor</option>
+        <option value="Usuário">Usuário</option>
+        <option value="Sociedade Civil">Sociedade Civil</option>
+        <option value="Poder Público">Poder Público</option>
+      </select>
+
+      <select name="representacao" required>
+        <option value="">Selecione a representação</option>
+        <option value="Titular">Titular</option>
+        <option value="Suplente">Suplente</option>
+      </select>
+
       <button type="submit">Registrar Presença</button>
     </form>
     <p id="mensagem"></p>
@@ -33,6 +45,7 @@
   <script>
     const form = document.getElementById("formPresenca");
     const mensagem = document.getElementById("mensagem");
+    const API_URL = "https://script.google.com/macros/s/AKfycbxlxiuVdashA7ScizB1NuTzIYhVpDu-dkB4GBEnY6lQxiaqQy7IwD_f756KwoOGKkG_/exec";
 
     form.addEventListener("submit", async function(e) {
       e.preventDefault();
@@ -40,7 +53,21 @@
       dados.data = new Date().toISOString().split("T")[0];
       dados.codigo = Math.random().toString(36).substring(2, 10);
 
-      const resposta = await fetch("https://script.google.com/macros/s/AKfycbxlxiuVdashA7ScizB1NuTzIYhVpDu-dkB4GBEnY6lQxiaqQy7IwD_f756KwoOGKkG_/exec", {
+      // Verifica se já existe registro para o CPF na data atual
+      const res = await fetch(API_URL);
+      const registros = await res.json();
+      const presencas = registros.slice(1); // ignora cabeçalho
+
+      const duplicado = presencas.find(p => p[2] === dados.cpf && p[0] === dados.data);
+
+      if (duplicado) {
+        mensagem.textContent = "⚠️ Você já registrou presença hoje.";
+        mensagem.style.color = "orange";
+        return;
+      }
+
+      // Envia os dados
+      const resposta = await fetch(API_URL, {
         method: "POST",
         body: JSON.stringify(dados)
       });
