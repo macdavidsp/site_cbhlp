@@ -5,77 +5,93 @@
   <title>Administração</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="export.js"></script>
+  <script src="supabase.js"></script>
 </head>
 <body>
   <header>
+    <h1>Painel Administrativo</h1>
     <nav>
       <ul>
-        <li><a href="index.html">INICIAL</a></li>
-        <li><a href="cadastro.html">REGISTRO</a></li>
-        <li><a href="quorum.html">QUORUM</a></li>
-        <li><a href="verificar.html">VERIFICAÇÃO</a></li>
-        <li><a href="admin.html">ADMIN</a></li>
+        <li><a href="index.html">Início</a></li>
+        <li><a href="cadastro.html">Registro</a></li>
+        <li><a href="verificar.html">Verificação</a></li>
+        <li><a href="quorum.html">Quórum</a></li>
+        <li><a href="admin.html">Admin</a></li>
       </ul>
     </nav>
   </header>
   <main>
-    <h2>Login do Administrador</h2>
-    <form id="loginForm">
-      <input type="text" name="usuario" placeholder="Usuário" required />
-      <input type="password" name="senha" placeholder="Senha" required />
-      <button type="submit">Entrar</button>
-    </form>
-    <p id="loginStatus"></p>
+    <div id="loginArea">
+      <h2>Login do Administrador</h2>
+      <form id="loginForm">
+        <input type="text" name="usuario" placeholder="Usuário" required />
+        <input type="password" name="senha" placeholder="Senha" required />
+        <button type="submit">Entrar</button>
+      </form>
+      <p id="loginMensagem"></p>
+    </div>
 
-    <div id="painelAdmin" style="display:none;">
-      <h2>Lista de Frequência</h2>
-      <table id="tabelaFrequencia"></table>
-      <button onclick="exportarCSV()">Exportar CSV</button>
-      <button onclick="exportarPDF()">Exportar PDF</button>
+    <div id="adminArea" style="display:none;">
+      <h2>Reunião Ativa</h2>
+      <button onclick="registrarReuniao()">Registrar nova reunião</button>
+      <p id="reuniaoStatus"></p>
+
+      <h2>Presenças da reunião atual</h2>
+      <ul id="listaPresencas"></ul>
+
+      <h2>Consultar reuniões anteriores</h2>
+      <select id="reunioesPassadas" onchange="listarPresencasPassadas(this.value)">
+        <option value="">Selecione uma data</option>
+      </select>
+      <ul id="listaPassada"></ul>
     </div>
   </main>
 
   <script>
-    const supabase = supabase.createClient(
-      'https://wdxwgtkgkhdeslmbkmnt.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHdndGtna2hkZXNsbWJrbW50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE4Nzk5NzgsImV4cCI6MjA3NzQ1NTk3OH0._UfUZYLU9tY-nmWYt88fO9sOifCugPxPfQ6rQ-d0t_M'
-    );
+    const loginForm = document.getElementById("loginForm");
+    const loginMensagem = document.getElementById("loginMensagem");
+    const loginArea = document.getElementById("loginArea");
+    const adminArea = document.getElementById("adminArea");
 
-    let acessoLiberado = false;
-
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("loginForm").addEventListener("submit", function(e) {
-        e.preventDefault();
-        const dados = Object.fromEntries(new FormData(this));
-        if (dados.usuario === "admin" && dados.senha === "cbhlp2025") {
-          acessoLiberado = true;
-          document.getElementById("loginStatus").textContent = "Acesso liberado!";
-          document.getElementById("painelAdmin").style.display = "block";
-          carregarLista();
-        } else {
-          document.getElementById("loginStatus").textContent = "Usuário ou senha inválidos.";
-        }
-      });
+    loginForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+      const dados = Object.fromEntries(new FormData(this));
+      if (dados.usuario === "admin" && dados.senha === "cbhlp2025") {
+        loginArea.style.display = "none";
+        adminArea.style.display = "block";
+        carregarAdmin();
+      } else {
+        loginMensagem.textContent = "Usuário ou senha incorretos.";
+        loginMensagem.style.color = "red";
+      }
     });
 
-    async function carregarLista() {
-      if (!acessoLiberado) return;
+    async function registrarReuniao() {
+      const hoje = new Date().toISOString().split("T")[0];
+      await supabase.from("reunioes").update({ ativa: false }).eq("ativa", true);
+      const { error } = await supabase.from("reunioes").insert([{ data_reuniao: hoje, ativa: true }]);
+      document.getElementById("reuniaoStatus").textContent = error ? "Erro ao registrar reunião." : "Reunião registrada com sucesso!";
+      carregarAdmin();
+    }
 
-      const { data: registros, error } = await supabase
-        .from("presencas")
-        .select("*")
-        .order("data_reuniao", { ascending: false });
+    async function carregarAdmin() {
+      const { data: ativa } = await supabase.from("reunioes").select("data_reuniao").eq("ativa", true).single();
+      const dataAtual = ativa?.data_reuniao;
+      document.getElementById("reuniaoStatus").textContent = dataAtual ? `Reunião ativa: ${dataAtual}` : "Nenhuma reunião ativa.";
 
-      if (error) {
-        console.error("Erro ao carregar lista:", error.message);
-        return;
-      }
+      const { data: presencas } = await supabase.from("presencas").select("*").eq("data_reuniao", dataAtual);
+      const lista = document.getElementById("listaPresencas");
+      lista.innerHTML = presencas.map(p => `<li>${p.nome} (${p.instituicao}) - ${p.setor} / ${p.representacao}</li>`).join("");
 
-      const tabela = document.getElementById("tabelaFrequencia");
-      tabela.innerHTML = "<tr><th>Data</th><th>Nome</th><th>Entidade</th><th>Representação</th><th>Setor</th><th>Código</th></tr>" +
-        registros.map(r => `<tr><td>${r.data_reuniao}</td><td>${r.nome}</td><td>${r.instituicao}</td><td>${r.representacao}</td><td>${r.setor}</td><td>${r.codigo}</td></tr>`).join("");
+      const { data: reunioes } = await supabase.from("reunioes").select("data_reuniao").order("data_reuniao", { ascending: false });
+      const select = document.getElementById("reunioesPassadas");
+      select.innerHTML = `<option value="">Selecione uma data</option>` + reunioes.map(r => `<option value="${r.data_reuniao}">${r.data_reuniao}</option>`).join("");
+    }
+
+    async function listarPresencasPassadas(data) {
+      const { data: presencas } = await supabase.from("presencas").select("*").eq("data_reuniao", data);
+      const lista = document.getElementById("listaPassada");
+      lista.innerHTML = presencas.map(p => `<li>${p.nome} (${p.instituicao}) - ${p.setor} / ${p.representacao}</li>`).join("");
     }
   </script>
 </body>

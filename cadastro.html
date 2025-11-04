@@ -2,24 +2,26 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Registro de Participante</title>
+  <title>Registro de Presença</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="supabase.js"></script>
 </head>
 <body>
   <header>
+    <h1>Registro de Presença</h1>
     <nav>
       <ul>
-        <li><a href="index.html">INICIAL</a></li>
-        <li><a href="cadastro.html">REGISTRO</a></li>
-        <li><a href="quorum.html">QUORUM</a></li>
-        <li><a href="verificar.html">VERIFICAÇÃO</a></li>
-        <li><a href="admin.html">ADMIN</a></li>
+        <li><a href="index.html">Início</a></li>
+        <li><a href="cadastro.html">Registro</a></li>
+        <li><a href="verificar.html">Verificação</a></li>
+        <li><a href="quorum.html">Quórum</a></li>
+        <li><a href="admin.html">Admin</a></li>
       </ul>
     </nav>
   </header>
   <main>
-    <h2>Ficha Cadastral</h2>
+    <h2>Preencha seus dados</h2>
     <form id="cadastroForm">
       <input type="text" name="nome" placeholder="Nome completo" required />
       <input type="text" name="cpf" placeholder="CPF" required />
@@ -35,39 +37,51 @@
         <option value="Titular">Titular</option>
         <option value="Suplente">Suplente</option>
       </select>
-      <button type="submit">Registrar Presença</button>
+      <button type="submit">Confirmar Presença</button>
     </form>
-    <p id="mensagem" style="margin-top: 20px; font-weight: bold;"></p>
+    <p id="mensagem"></p>
   </main>
 
   <script>
-    const supabase = supabase.createClient(
-      'https://wdxwgtkgkhdeslmbkmnt.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHdndGtna2hkZXNsbWJrbW50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE4Nzk5NzgsImV4cCI6MjA3NzQ1NTk3OH0._UfUZYLU9tY-nmWYt88fO9sOifCugPxPfQ6rQ-d0t_M'
-    );
+    async function getReuniaoAtiva() {
+      const { data, error } = await supabase
+        .from("reunioes")
+        .select("data_reuniao")
+        .eq("ativa", true)
+        .single();
+      return data?.data_reuniao || null;
+    }
 
     document.getElementById("cadastroForm").addEventListener("submit", async function(e) {
       e.preventDefault();
+      const dataReuniao = await getReuniaoAtiva();
+      const mensagem = document.getElementById("mensagem");
+
+      if (!dataReuniao) {
+        mensagem.textContent = "Nenhuma reunião ativa no momento.";
+        mensagem.style.color = "red";
+        return;
+      }
+
       const dados = Object.fromEntries(new FormData(this));
-      const codigo = "ID-" + btoa(dados.cpf).slice(0, 8);
-      const hoje = new Date().toISOString().split("T")[0];
+      const cpf = dados.cpf.replace(/\D/g, "");
+      const codigo = "ID-" + btoa(cpf).slice(0, 8);
 
       const { error } = await supabase.from("presencas").insert([{
         nome: dados.nome,
-        cpf: dados.cpf,
+        cpf: cpf,
         instituicao: dados.instituicao,
         setor: dados.setor,
         representacao: dados.representacao,
-        data_reuniao: hoje,
+        data_reuniao: dataReuniao,
         codigo: codigo
       }]);
 
-      const mensagem = document.getElementById("mensagem");
       if (error) {
-        mensagem.textContent = "Erro ao registrar presença: " + error.message;
+        mensagem.textContent = "Erro ao registrar presença.";
         mensagem.style.color = "red";
       } else {
-        mensagem.innerHTML = `✅ <strong>SUA PRESENÇA FOI CONFIRMADA</strong><br>CÓDIGO DE VALIDAÇÃO: <strong>${codigo}</strong>`;
+        mensagem.innerHTML = `✅ Presença confirmada!<br>Código de validação: <strong>${codigo}</strong>`;
         mensagem.style.color = "green";
         this.reset();
       }

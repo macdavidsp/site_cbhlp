@@ -4,74 +4,76 @@
   <meta charset="UTF-8" />
   <title>Quórum da Reunião</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="supabase.js"></script>
 </head>
 <body>
   <header>
+    <h1>Quórum da Reunião</h1>
     <nav>
       <ul>
-        <li><a href="index.html">INICIAL</a></li>
-        <li><a href="cadastro.html">REGISTRO</a></li>
-        <li><a href="quorum.html">QUORUM</a></li>
-        <li><a href="verificar.html">VERIFICAÇÃO</a></li>
-        <li><a href="admin.html">ADMIN</a></li>
+        <li><a href="index.html">Início</a></li>
+        <li><a href="cadastro.html">Registro</a></li>
+        <li><a href="verificar.html">Verificação</a></li>
+        <li><a href="quorum.html">Quórum</a></li>
+        <li><a href="admin.html">Admin</a></li>
       </ul>
     </nav>
   </header>
   <main>
-    <h2>Acompanhamento do Quórum</h2>
-    <p>Total de participantes: <span id="total"></span></p>
-    <p>Quórum atingido: <span id="percentual"></span>%</p>
-    <canvas id="graficoQuorum" width="400" height="400"></canvas>
+    <h2>Presenças registradas</h2>
+    <canvas id="graficoQuorum" width="400" height="200"></canvas>
+    <p id="statusQuorum"></p>
   </main>
+
   <script>
-    const supabase = supabase.createClient(
-      'https://wdxwgtkgkhdeslmbkmnt.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHdndGtna2hkZXNsbWJrbW50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE4Nzk5NzgsImV4cCI6MjA3NzQ1NTk3OH0._UfUZYLU9tY-nmWYt88fO9sOifCugPxPfQ6rQ-d0t_M'
-    );
+    async function getReuniaoAtiva() {
+      const { data } = await supabase
+        .from("reunioes")
+        .select("data_reuniao")
+        .eq("ativa", true)
+        .single();
+      return data?.data_reuniao || null;
+    }
 
-    document.addEventListener("DOMContentLoaded", carregarQuorum);
+    async function contarPresencas(dataReuniao) {
+      const { data } = await supabase
+        .from("presencas")
+        .select("id")
+        .eq("data_reuniao", dataReuniao);
+      return data.length;
+    }
 
-    async function carregarQuorum() {
-      const { data, error } = await supabase.from("presencas").select("*");
-
-      if (error) {
-        console.error("Erro ao buscar dados:", error.message);
-        return;
-      }
-
-      const total = data.length;
-      const metaQuorum = 10;
-      const percentual = ((total / metaQuorum) * 100).toFixed(0);
-      const restante = Math.max(metaQuorum - total, 0);
-
-      document.getElementById("total").textContent = total;
-      document.getElementById("percentual").textContent = percentual;
-
-      const ctx = document.getElementById("graficoQuorum")?.getContext("2d");
-      if (!ctx) {
-        console.error("Canvas não encontrado");
-        return;
-      }
+    async function gerarGrafico() {
+      const dataReuniao = await getReuniaoAtiva();
+      const total = await contarPresencas(dataReuniao);
+      const ctx = document.getElementById("graficoQuorum").getContext("2d");
 
       new Chart(ctx, {
-        type: "doughnut",
+        type: "bar",
         data: {
-          labels: ["Presentes", "Faltantes"],
+          labels: ["Presenças", "Quórum mínimo"],
           datasets: [{
-            data: [total, restante],
-            backgroundColor: ["#4CAF50", "#ccc"]
+            label: "Participantes",
+            data: [total, 15],
+            backgroundColor: ["#004d99", "#999"]
           }]
         },
         options: {
-          plugins: {
-            legend: { position: "bottom" },
-            title: { display: true, text: "Quórum da Reunião" }
+          scales: {
+            y: { beginAtZero: true }
           }
         }
       });
+
+      const status = document.getElementById("statusQuorum");
+      status.textContent = total >= 15
+        ? "✅ Quórum atingido!"
+        : `⚠️ Apenas ${total} participantes. Quórum mínimo é 15.`;
     }
+
+    gerarGrafico();
   </script>
 </body>
 </html>

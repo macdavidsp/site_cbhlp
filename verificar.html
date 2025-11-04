@@ -2,51 +2,57 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Verificação de Assinatura</title>
+  <title>Verificar Presença</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="supabase.js"></script>
 </head>
 <body>
   <header>
+    <h1>Verificação de Presença</h1>
     <nav>
       <ul>
-        <li><a href="index.html">INICIAL</a></li>
-        <li><a href="cadastro.html">REGISTRO</a></li>
-        <li><a href="quorum.html">QUORUM</a></li>
-        <li><a href="verificar.html">VERIFICAÇÃO</a></li>
-        <li><a href="admin.html">ADMIN</a></li>
+        <li><a href="index.html">Início</a></li>
+        <li><a href="cadastro.html">Registro</a></li>
+        <li><a href="verificar.html">Verificação</a></li>
+        <li><a href="quorum.html">Quórum</a></li>
+        <li><a href="admin.html">Admin</a></li>
       </ul>
     </nav>
   </header>
   <main>
-    <h2>Verificação de Assinatura</h2>
+    <h2>Digite seu código de validação</h2>
     <form id="verificarForm">
-      <input type="text" placeholder="Código de verificação" required name="codigo" />
+      <input type="text" name="codigo" placeholder="Código de validação" required />
       <button type="submit">Verificar</button>
     </form>
-    <p id="resultado"></p>
+    <div id="resultado"></div>
   </main>
-  <script>
-    const supabase = supabase.createClient(
-      'https://wdxwgtkgkhdeslmbkmnt.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHdndGtna2hkZXNsbWJrbW50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE4Nzk5NzgsImV4cCI6MjA3NzQ1NTk3OH0._UfUZYLU9tY-nmWYt88fO9sOifCugPxPfQ6rQ-d0t_M'
-    );
 
+  <script>
     document.getElementById("verificarForm").addEventListener("submit", async function(e) {
       e.preventDefault();
       const codigo = new FormData(this).get("codigo");
-
       const { data, error } = await supabase
         .from("presencas")
         .select("*")
-        .eq("codigo", codigo);
+        .eq("codigo", codigo)
+        .single();
 
       const resultado = document.getElementById("resultado");
-      if (error || !data || data.length === 0) {
+      if (error || !data) {
         resultado.textContent = "Código não encontrado.";
+        resultado.style.color = "red";
       } else {
-        const r = data[0];
-        resultado.textContent = `Assinatura válida: ${r.nome} (${r.instituicao}) em ${r.data_reuniao}`;
+        resultado.innerHTML = `
+          <p><strong>Presença confirmada!</strong></p>
+          <p>Nome: ${data.nome}</p>
+          <p>Instituição: ${data.instituicao}</p>
+          <p>Setor: ${data.setor}</p>
+          <p>Representação: ${data.representacao}</p>
+          <p>Data da reunião: ${data.data_reuniao}</p>
+        `;
+        resultado.style.color = "green";
       }
     });
   </script>
