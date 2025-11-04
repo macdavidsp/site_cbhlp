@@ -4,46 +4,6 @@
   <meta charset="UTF-8" />
   <title>Painel Administrativo</title>
   <link rel="stylesheet" href="style.css" />
-  <style>
-    #loginArea, #status, table {
-      margin-top: 20px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-    }
-
-    th {
-      background-color: #f0f0f0;
-    }
-
-    #status {
-      font-weight: bold;
-    }
-
-    input[type="password"], button {
-      padding: 10px;
-      font-size: 1em;
-    }
-
-    button {
-      background-color: #00796b;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #004d40;
-    }
-  </style>
 </head>
 <body>
   <header>
@@ -60,12 +20,10 @@
   </header>
   <main>
     <div id="loginArea">
-      <input type="password" id="senha" placeholder="Digite a senha de acesso" />
+      <input type="password" id="senha" placeholder="Digite a senha de admin" />
       <button onclick="verificarSenha()">Entrar</button>
     </div>
-
-    <p id="status" style="display:none;">🔄 Carregando registros de hoje...</p>
-
+    <p id="status" style="display:none;"></p>
     <table id="tabelaPresencas" style="display:none;">
       <thead>
         <tr>
@@ -86,11 +44,11 @@
     const status = document.getElementById("status");
     const tabelaPresencas = document.getElementById("tabelaPresencas");
     const loginArea = document.getElementById("loginArea");
-    const API_URL = "https://script.google.com/a/macros/mail.uft.edu.br/s/AKfycbwxsGyjekkgQx-OZbSrAufOYiSCPCWBFmlBS2GhnzP78I2EQCkJu9LPmbl3cWVO64jBSw/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbwxsGyjekkgQx-OZbSrAufOYiSCPCWBFmlBS2GhnzP78I2EQCkJu9LPmbl3cWVO64jBSw/exec";
 
     function verificarSenha() {
       const senha = document.getElementById("senha").value.trim();
-      const senhaCorreta = "cbhlp2025"; // 🔐 defina sua senha aqui
+      const senhaCorreta = "cbhlp2025";
 
       if (senha === senhaCorreta) {
         loginArea.style.display = "none";
@@ -111,6 +69,7 @@
 
         if (presencasHoje.length === 0) {
           status.textContent = "⚠️ Nenhuma presença registrada hoje.";
+          status.style.color = "orange";
           return;
         }
 

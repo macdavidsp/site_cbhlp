@@ -2,35 +2,12 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Quórum da Reunião</title>
+  <title>Quórum por Setor</title>
   <link rel="stylesheet" href="style.css" />
-  <style>
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-    }
-
-    th {
-      background-color: #f0f0f0;
-    }
-
-    #status {
-      margin-top: 10px;
-      font-weight: bold;
-      text-align: center;
-    }
-  </style>
 </head>
 <body>
   <header>
-    <h1>Quórum da Reunião</h1>
+    <h1>Quórum por Setor</h1>
     <nav>
       <ul>
         <li><a href="index.html">Início</a></li>
@@ -42,7 +19,7 @@
     </nav>
   </header>
   <main>
-    <p id="status">🔄 Calculando quórum...</p>
+    <p id="status">⏳ Calculando quórum...</p>
     <table id="tabelaQuorum">
       <thead>
         <tr>
@@ -59,7 +36,7 @@
   <script>
     const tabela = document.querySelector("#tabelaQuorum tbody");
     const status = document.getElementById("status");
-    const API_URL = "https://script.google.com/a/macros/mail.uft.edu.br/s/AKfycbwxsGyjekkgQx-OZbSrAufOYiSCPCWBFmlBS2GhnzP78I2EQCkJu9LPmbl3cWVO64jBSw/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbwxsGyjekkgQx-OZbSrAufOYiSCPCWBFmlBS2GhnzP78I2EQCkJu9LPmbl3cWVO64jBSw/exec";
 
     async function calcularQuorum() {
       try {
@@ -70,6 +47,7 @@
 
         if (presencasHoje.length === 0) {
           status.textContent = "⚠️ Nenhuma presença registrada hoje.";
+          status.style.color = "orange";
           return;
         }
 
