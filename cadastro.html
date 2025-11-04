@@ -49,14 +49,13 @@
       mensagem.textContent = "⏳ Processando...";
       mensagem.style.color = "black";
 
-      const dados = Object.fromEntries(new FormData(form));
-      dados.data = new Date().toISOString().split("T")[0];
+      const formData = new FormData(form);
+      formData.append("data", new Date().toISOString().split("T")[0]);
 
       try {
         const res = await fetch(API_URL, {
           method: "POST",
-          body: JSON.stringify(dados),
-          headers: { "Content-Type": "application/json" }
+          body: formData
         });
 
         const texto = await res.text();
