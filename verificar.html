@@ -2,7 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Verificação de Assinatura</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verificação de Presença</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
@@ -12,6 +13,7 @@
       <ul>
         <li><a href="index.html">INICIAL</a></li>
         <li><a href="cadastro.html">REGISTRO</a></li>
+        <li><a href="consulta.html">CONSULTA</a></li>
         <li><a href="quorum.html">QUORUM</a></li>
         <li><a href="verificar.html">VERIFICAÇÃO</a></li>
         <li><a href="admin.html">ADMIN</a></li>
@@ -19,17 +21,37 @@
     </nav>
   </header>
   <main>
-    <h2>Verificação de Assinatura</h2>
-    <form id="verificarForm">
-      <input type="text" placeholder="Código de verificação" required name="codigo" />
-      <button type="submit">Verificar</button>
-    </form>
-    <p id="resultado"></p>
+    <h2>Verificação Individual</h2>
+    <input type="text" id="cpf" placeholder="Digite o CPF" />
+    <button onclick="verificar()">Verificar</button>
+    <div id="resultado"></div>
   </main>
+
   <script>
     const supabase = supabase.createClient(
       'https://wdxwgtkgkhdeslmbkmnt.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHdndGtna2hkZXNsbWJrbW50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE4Nzk5NzgsImV4cCI6MjA3NzQ1NTk3OH0._UfUZYLU9tY-nmWYt88fO9sOifCugPxPfQ6rQ-d0t_M'
     );
 
-    document.getElementBy
+    async function verificar() {
+      const cpf = document.getElementById("cpf").value;
+      const { data, error } = await supabase.from("presencas").select("*").eq("cpf", cpf);
+      const div = document.getElementById("resultado");
+
+      if (error) {
+        div.textContent = "Erro ao consultar.";
+        return;
+      }
+      if (!data || data.length === 0) {
+        div.textContent = "CPF não encontrado.";
+        return;
+      }
+      const p = data[0];
+      div.innerHTML = `<p><strong>Nome:</strong> ${p.nome}</p>
+                       <p><strong>Instituição:</strong> ${p.instituicao}</p>
+                       <p><strong>Representação:</strong> ${p.representacao}</p>
+                       <p><strong>Setor:</strong> ${p.setor}</p>`;
+    }
+  </script>
+</body>
+</html>

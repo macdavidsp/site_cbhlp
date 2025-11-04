@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Consulta de Presenças</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
@@ -12,12 +13,14 @@
       <ul>
         <li><a href="index.html">INICIAL</a></li>
         <li><a href="cadastro.html">REGISTRO</a></li>
+        <li><a href="consulta.html">CONSULTA</a></li>
         <li><a href="quorum.html">QUORUM</a></li>
         <li><a href="verificar.html">VERIFICAÇÃO</a></li>
         <li><a href="admin.html">ADMIN</a></li>
       </ul>
     </nav>
   </header>
+
   <main>
     <h2>Consulta de Presenças por Data</h2>
     <input type="date" id="dataBusca" />
@@ -27,8 +30,8 @@
 
   <script>
     const supabase = supabase.createClient(
-      'https://SEU-PROJECT.supabase.co',
-      'SUA-CHAVE-PUBLICA'
+      'https://wdxwgtkgkhdeslmbkmnt.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHdndGtna2hkZXNsbWJrbW50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE4Nzk5NzgsImV4cCI6MjA3NzQ1NTk3OH0._UfUZYLU9tY-nmWYt88fO9sOifCugPxPfQ6rQ-d0t_M'
     );
 
     async function buscar() {
@@ -43,13 +46,11 @@
         tabela.innerHTML = "<tr><td>Erro ao buscar dados.</td></tr>";
         return;
       }
-
-      if (registros.length === 0) {
+      if (!registros || registros.length === 0) {
         tabela.innerHTML = "<tr><td>Nenhum registro encontrado.</td></tr>";
         return;
       }
-
-      tabela.innerHTML = "<tr><th>Nome</th><th>Entidade</th><th>Representação</th><th>Setor</th><th>Código</th></tr>" +
+      tabela.innerHTML = "<tr><th>Nome</th><th>Instituição</th><th>Representação</th><th>Setor</th><th>Código</th></tr>" +
         registros.map(r => `<tr><td>${r.nome}</td><td>${r.instituicao}</td><td>${r.representacao}</td><td>${r.setor}</td><td>${r.codigo}</td></tr>`).join("");
     }
   </script>
