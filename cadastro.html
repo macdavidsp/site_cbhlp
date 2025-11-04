@@ -4,6 +4,26 @@
   <meta charset="UTF-8" />
   <title>Registro de Presença</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    #aguarde {
+      display: none;
+      color: #00796b;
+      font-weight: bold;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      margin-top: 10px;
+    }
+
+    #aguarde.mostrar {
+      display: block;
+      opacity: 1;
+    }
+
+    #mensagem {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -39,13 +59,16 @@
 
       <button type="submit">Registrar Presença</button>
     </form>
+
+    <p id="aguarde">⏳ Processando... aguarde confirmação.</p>
     <p id="mensagem"></p>
   </main>
 
   <script>
     const form = document.getElementById("formPresenca");
     const mensagem = document.getElementById("mensagem");
-    const API_URL = "https://script.google.com/macros/s/AKfycbxlxiuVdashA7ScizB1NuTzIYhVpDu-dkB4GBEnY6lQxiaqQy7IwD_f756KwoOGKkG_/exec";
+    const aguarde = document.getElementById("aguarde");
+    const API_URL = "https://script.google.com/macros/s/AKfycby6nFeO6loRy4PLMNEo7JH7RQDna55Zf5ksKy80ye6HUPsbnhM8EJCrULSLUHuyRf4j/exec";
 
     form.addEventListener("submit", async function(e) {
       e.preventDefault();
@@ -53,26 +76,21 @@
       dados.data = new Date().toISOString().split("T")[0];
       dados.codigo = Math.random().toString(36).substring(2, 10);
 
-      // Verifica se já existe registro para o CPF na data atual
-      const res = await fetch(API_URL);
-      const registros = await res.json();
-      const presencas = registros.slice(1); // ignora cabeçalho
+      aguarde.classList.add("mostrar");
+      mensagem.textContent = "";
 
-      const duplicado = presencas.find(p => p[2] === dados.cpf && p[0] === dados.data);
-
-      if (duplicado) {
-        mensagem.textContent = "⚠️ Você já registrou presença hoje.";
-        mensagem.style.color = "orange";
-        return;
-      }
-
-      // Envia os dados
       const resposta = await fetch(API_URL, {
         method: "POST",
         body: JSON.stringify(dados)
       });
 
-      if (resposta.ok) {
+      const resultado = await resposta.text();
+      aguarde.classList.remove("mostrar");
+
+      if (resultado === "DUPLICADO") {
+        mensagem.textContent = "⚠️ Você já registrou presença hoje.";
+        mensagem.style.color = "orange";
+      } else if (resultado === "OK") {
         mensagem.textContent = "✅ Presença registrada com sucesso!";
         mensagem.style.color = "green";
         form.reset();
