@@ -5,10 +5,13 @@
   <title>Painel Administrativo</title>
   <link rel="stylesheet" href="style.css" />
   <style>
+    #loginArea, #status, table {
+      margin-top: 20px;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
     }
 
     th, td {
@@ -22,7 +25,6 @@
     }
 
     #status {
-      margin-top: 10px;
       font-weight: bold;
     }
   </style>
@@ -41,8 +43,14 @@
     </nav>
   </header>
   <main>
-    <p id="status">🔄 Carregando registros de hoje...</p>
-    <table id="tabelaPresencas">
+    <div id="loginArea">
+      <input type="password" id="senha" placeholder="Digite a senha de acesso" />
+      <button onclick="verificarSenha()">Entrar</button>
+    </div>
+
+    <p id="status" style="display:none;">🔄 Carregando registros de hoje...</p>
+
+    <table id="tabelaPresencas" style="display:none;">
       <thead>
         <tr>
           <th>Nome</th>
@@ -60,7 +68,23 @@
   <script>
     const tabela = document.querySelector("#tabelaPresencas tbody");
     const status = document.getElementById("status");
+    const tabelaPresencas = document.getElementById("tabelaPresencas");
+    const loginArea = document.getElementById("loginArea");
     const API_URL = "https://script.google.com/macros/s/AKfycbxlxiuVdashA7ScizB1NuTzIYhVpDu-dkB4GBEnY6lQxiaqQy7IwD_f756KwoOGKkG_/exec";
+
+    function verificarSenha() {
+      const senha = document.getElementById("senha").value.trim();
+      const senhaCorreta = "cbhlp2025"; // 🔐 defina sua senha aqui
+
+      if (senha === senhaCorreta) {
+        loginArea.style.display = "none";
+        status.style.display = "block";
+        tabelaPresencas.style.display = "table";
+        carregarPresencas();
+      } else {
+        alert("Senha incorreta. Acesso negado.");
+      }
+    }
 
     async function carregarPresencas() {
       try {
@@ -94,8 +118,6 @@
         status.style.color = "red";
       }
     }
-
-    carregarPresencas();
   </script>
 </body>
 </html>
