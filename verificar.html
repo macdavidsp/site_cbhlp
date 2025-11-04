@@ -8,6 +8,31 @@
     #resultado {
       margin-top: 15px;
       font-weight: bold;
+      text-align: center;
+    }
+
+    form {
+      max-width: 400px;
+      margin: 40px auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    input, button {
+      padding: 10px;
+      font-size: 1em;
+    }
+
+    button {
+      background-color: #00796b;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #004d40;
     }
   </style>
 </head>
@@ -35,10 +60,13 @@
   <script>
     const form = document.getElementById("formVerificar");
     const resultado = document.getElementById("resultado");
-    const API_URL = "https://script.google.com/macros/s/AKfycbxlxiuVdashA7ScizB1NuTzIYhVpDu-dkB4GBEnY6lQxiaqQy7IwD_f756KwoOGKkG_/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbxqCev0V6zzyJrFQLnqRinseC7-eAdA71pky8USBw01focvmd9IQwLIkagej-kjHtl1/exec";
 
     form.addEventListener("submit", async function(e) {
       e.preventDefault();
+      resultado.textContent = "⏳ Verificando...";
+      resultado.style.color = "black";
+
       const cpf = new FormData(form).get("cpf").trim();
       const hoje = new Date().toISOString().split("T")[0];
 

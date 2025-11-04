@@ -27,6 +27,22 @@
     #status {
       font-weight: bold;
     }
+
+    input[type="password"], button {
+      padding: 10px;
+      font-size: 1em;
+    }
+
+    button {
+      background-color: #00796b;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #004d40;
+    }
   </style>
 </head>
 <body>
@@ -70,7 +86,7 @@
     const status = document.getElementById("status");
     const tabelaPresencas = document.getElementById("tabelaPresencas");
     const loginArea = document.getElementById("loginArea");
-    const API_URL = "https://script.google.com/macros/s/AKfycbxlxiuVdashA7ScizB1NuTzIYhVpDu-dkB4GBEnY6lQxiaqQy7IwD_f756KwoOGKkG_/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbxqCev0V6zzyJrFQLnqRinseC7-eAdA71pky8USBw01focvmd9IQwLIkagej-kjHtl1/exec";
 
     function verificarSenha() {
       const senha = document.getElementById("senha").value.trim();

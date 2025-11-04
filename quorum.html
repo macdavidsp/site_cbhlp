@@ -24,6 +24,7 @@
     #status {
       margin-top: 10px;
       font-weight: bold;
+      text-align: center;
     }
   </style>
 </head>
@@ -58,7 +59,7 @@
   <script>
     const tabela = document.querySelector("#tabelaQuorum tbody");
     const status = document.getElementById("status");
-    const API_URL = "https://script.google.com/macros/s/AKfycbxlxiuVdashA7ScizB1NuTzIYhVpDu-dkB4GBEnY6lQxiaqQy7IwD_f756KwoOGKkG_/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbxqCev0V6zzyJrFQLnqRinseC7-eAdA71pky8USBw01focvmd9IQwLIkagej-kjHtl1/exec";
 
     async function calcularQuorum() {
       try {
@@ -82,7 +83,7 @@
         presencasHoje.forEach(p => {
           const setor = p[4];
           const representacao = p[5];
-          if (contagem[setor]) {
+          if (contagem[setor] && contagem[setor][representacao] !== undefined) {
             contagem[setor][representacao]++;
           }
         });
