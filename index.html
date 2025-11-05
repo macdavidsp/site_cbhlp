@@ -475,9 +475,6 @@
             switchView(targetId);
         }
         
-        // *** CORREÇÃO DE EXECUÇÃO: Executa a configuração de navegação imediatamente. ***
-        // O script é um módulo no final do body, então os elementos já estão disponíveis.
-        
         // 1. Inicia no Menu Principal
         switchView('main-cards-view'); 
         
@@ -486,19 +483,21 @@
             switchView('main-cards-view');
         });
         
-        // 3. Listener para os botões de Navegação (Abas)
-        const menuButtons = document.querySelectorAll('.menu-card-btn');
-        menuButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                e.preventDefault();
-                // Garante que o target seja o valor do atributo data-target
-                const target = button.dataset.target; 
-                if (target) {
-                    handleViewSwitch(target);
+        // 3. Listener para os botões de Navegação (Abas) - USANDO DELEGAÇÃO DE EVENTOS
+        const menuCardsGrid = document.getElementById('menu-cards-grid');
+        if (menuCardsGrid) {
+            menuCardsGrid.addEventListener('click', (e) => {
+                const button = e.target.closest('.menu-card-btn');
+                if (button) {
+                    e.preventDefault();
+                    // Obtém o data-target do botão clicado
+                    const target = button.dataset.target; 
+                    if (target) {
+                        handleViewSwitch(target);
+                    }
                 }
             });
-        });
-        // *** FIM DA CORREÇÃO DE EXECUÇÃO ***
+        }
         
         // --- 3. Lógica do Estado da Reunião (NOVA FUNÇÃO CHAVE) ---
 
