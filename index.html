@@ -14,7 +14,7 @@
     <!-- Bibliotecas JS -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- NOVO: Adiciona a biblioteca jspdf-autotable para tabelas formatadas no PDF -->
+    <!-- Adiciona a biblioteca jspdf-autotable para tabelas formatadas no PDF -->
     <script src="https://unpkg.com/jspdf-autotable@3.5.21/dist/jspdf.plugin.autotable.js"></script>
     
     <!-- Configuração do Tailwind com a Paleta de Cores -->
@@ -44,6 +44,12 @@
             @apply w-full flex items-center justify-center space-x-3 text-lg; 
             /* Enhanced Design: Gradient, strong shadow, larger text */
             @apply bg-gradient-to-r from-brand-primary to-brand-success text-white font-extrabold py-4 px-6 rounded-xl shadow-xl hover:shadow-2xl hover:from-brand-primary/90 hover:to-brand-success/90 transition duration-300 ease-in-out transform hover:scale-[1.01];
+        }
+
+        /* Botão Vermelho para Finalizar */
+        .btn-danger {
+            @apply w-full flex items-center justify-center space-x-3 text-lg; 
+            @apply bg-red-600 text-white font-extrabold py-4 px-6 rounded-xl shadow-xl hover:shadow-2xl hover:bg-red-700 transition duration-300 ease-in-out transform hover:scale-[1.01];
         }
         
         /* --- ESTILO DE INPUT APRIMORADO COM BORDAS MAIS CLARAS E DISCRETAS --- */
@@ -90,6 +96,12 @@
         
         <!-- Mensagem de Status (Feedback) -->
         <div id="status-message" class="fixed top-4 right-4 p-4 rounded-xl shadow-2xl text-white font-medium transition-opacity duration-300 opacity-0 z-50 pointer-events-none" style="min-width: 300px;"></div>
+        
+        <!-- Estado da Reunião (Barra no topo, visível em todas as telas) -->
+        <div id="meeting-status-bar" class="bg-brand-primary/90 text-white text-center py-2 shadow-inner sticky top-0 z-40">
+            <span class="font-semibold" id="meeting-name-display">Carregando Estado...</span> 
+            <span id="meeting-status-badge" class="ml-2 px-3 py-1 text-xs font-bold rounded-full"></span>
+        </div>
 
         <!-- Cabeçalho (Botão para voltar ao Menu Principal) -->
         <header id="main-header" class="bg-white py-8 shadow-md mb-8 cursor-pointer hover:shadow-lg transition duration-200">
@@ -148,7 +160,11 @@
             <section id="registro" class="view-section container-card hidden">
                 <h2 class="section-title text-brand-accent">Seus Dados de Presença</h2>
                 
-                <!-- ATUALIZADO: Fundo do formulário agora usa bg-brand-light/30 e shadow-lg -->
+                <div id="registration-closed-message" class="hidden p-6 bg-red-100 text-red-700 border-l-4 border-red-500 rounded-lg mb-6 font-semibold">
+                    <p class="text-lg">Registro Fechado:</p>
+                    <p>O registro de frequência está fechado. Peça ao administrador para iniciar a reunião.</p>
+                </div>
+                
                 <form id="registration-form" class="space-y-6 p-6 bg-brand-light/30 rounded-2xl shadow-lg">
                     
                     <div>
@@ -166,7 +182,6 @@
                         <input type="text" id="institution" required class="input-field" placeholder="Nome da Instituição">
                     </div>
 
-                    <!-- CORREÇÃO 2: Layout em coluna única (grid-cols-1) para Setor e Representação -->
                     <div class="grid grid-cols-1 gap-4"> 
                         <div>
                             <label for="sector" class="block text-sm font-medium text-gray-700 mb-1">Setor</label>
@@ -188,7 +203,7 @@
                     </div>
                     
                     <div class="pt-4">
-                        <button type="submit" class="btn-primary w-full">
+                        <button type="submit" class="btn-primary w-full" id="register-button">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M9 11l3 3L22 4"/></svg>
                             <span>Confirmar e Registrar Presença</span>
                         </button>
@@ -199,19 +214,22 @@
             <!-- 3. Quórum (GRÁFICOS) -->
             <section id="quorum" class="view-section container-card hidden">
                 <h2 class="section-title text-brand-accent">Acompanhamento do Quórum</h2>
+                
+                <div class="mb-4 p-4 bg-brand-light/30 rounded-xl text-center shadow-lg">
+                    <p id="quorum-meeting-name" class="text-xl font-bold text-brand-primary">Carregando dados da Reunião...</p>
+                </div>
+
                 <div class="mb-8 bg-brand-light/30 p-6 rounded-xl shadow-lg flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-                    <p class="text-xl font-medium text-gray-700">Reunião de: <span id="current-date" class="text-brand-primary font-bold">--</span></p>
+                    <p class="text-xl font-medium text-gray-700">Início da Reunião: <span id="current-date" class="text-brand-primary font-bold">--</span></p>
                     <p class="text-xl font-medium text-gray-700">Total de Presentes:</p>
                     <span id="total-presentes" class="text-brand-success font-extrabold text-4xl p-2 rounded-lg bg-white shadow-inner">0</span>
                 </div>
                 
                 <div class="grid md:grid-cols-2 gap-8">
-                    <!-- ATUALIZADO: Fundo do card do gráfico -->
                     <div class="bg-brand-light/30 p-6 rounded-xl shadow-lg border border-gray-200">
                         <h3 class="text-xl font-semibold mb-3 text-brand-neutral border-b pb-2">Distribuição por Setor</h3>
                         <canvas id="sectorChart" class="w-full"></canvas>
                     </div>
-                    <!-- ATUALIZADO: Fundo do card do gráfico -->
                     <div class="bg-brand-light/30 p-6 rounded-xl shadow-lg border border-gray-200">
                         <h3 class="text-xl font-semibold mb-3 text-brand-neutral border-b pb-2">Distribuição por Representação</h3>
                         <canvas id="representationChart" class="w-full"></canvas>
@@ -222,7 +240,6 @@
             <!-- 4. Login Admin -->
             <section id="admin-login" class="view-section container-card hidden max-w-md">
                 <h2 class="section-title text-brand-accent">Acesso de Administrador</h2>
-                <!-- ATUALIZADO: Fundo do formulário agora usa bg-brand-light/30 e shadow-lg -->
                 <form id="admin-login-form" class="space-y-6 p-6 bg-brand-light/30 rounded-xl shadow-lg">
                     <div>
                         <label for="admin-password" class="block text-sm font-medium text-gray-700 mb-1">Senha de Administrador</label>
@@ -239,6 +256,30 @@
 
             <!-- 5. Dashboard Admin -->
             <section id="admin-dashboard" class="view-section container-card hidden">
+                
+                <!-- NOVO: Controles da Reunião -->
+                <div class="mb-8 p-6 bg-brand-light/30 rounded-xl shadow-lg border border-brand-light">
+                    <h3 class="text-xl font-bold text-brand-primary mb-4 border-b pb-2">Controle da Reunião</h3>
+                    
+                    <div class="flex flex-col md:flex-row justify-between items-start sm:items-center mb-4 space-y-3 md:space-y-0">
+                        <div id="admin-status-badge-container" class="text-lg font-semibold flex items-center space-x-2">
+                             <!-- Status será injetado aqui -->
+                        </div>
+                        <p class="text-base text-gray-700 italic" id="admin-meeting-info">Informações da reunião atual serão exibidas aqui.</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <button id="start-meeting-btn" class="btn-primary py-3 text-base hidden">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play-circle"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                            <span>INICIAR NOVA REUNIÃO</span>
+                        </button>
+                        <button id="end-meeting-btn" class="btn-danger py-3 text-base hidden">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
+                            <span>FINALIZAR REUNIÃO</span>
+                        </button>
+                    </div>
+                </div>
+
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b pb-2 border-brand-accent/50">
                     <h2 class="text-3xl font-extrabold text-brand-primary mb-3 sm:mb-0">Registros Detalhados</h2>
                     <div class="flex space-x-3">
@@ -247,7 +288,6 @@
                     </div>
                 </div>
 
-                <!-- ATUALIZADO: Fundo da tabela agora usa bg-brand-light/30 e shadow-lg -->
                 <div class="overflow-x-auto bg-brand-light/30 rounded-xl shadow-lg p-4 border border-gray-200">
                     <table class="min-w-full divide-y divide-gray-200 admin-table">
                         <thead class="bg-gray-200">
@@ -258,7 +298,7 @@
                                 <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Setor</th>
                                 <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Rep.</th>
                                 <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Cód. Validação</th>
-                                <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider rounded-tr-lg">Data</th>
+                                <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider rounded-tr-lg">Data/Hora</th>
                             </tr>
                         </thead>
                         <tbody id="admin-table-body" class="divide-y divide-gray-100">
@@ -272,7 +312,6 @@
             <!-- 6. Validação de Código -->
             <section id="validacao" class="view-section container-card hidden max-w-md">
                 <h2 class="section-title text-brand-accent">Verificação de Validação</h2>
-                <!-- ATUALIZADO: Fundo do formulário agora usa bg-brand-light/30 e shadow-lg -->
                 <form id="validation-form" class="space-y-4 p-6 bg-brand-light/30 rounded-xl shadow-lg">
                     <div>
                         <label for="validation-code-input" class="block text-sm font-medium text-gray-700 mb-1">Código de Validação</label>
@@ -300,50 +339,44 @@
 
     <!-- Script JavaScript (Módulo) -->
     <script type="module">
-        // Importações do Firebase (Protocolo HTTPS corrigido)
+        // Importações do Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs, onSnapshot, runTransaction, doc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, onSnapshot, runTransaction, doc, setDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         // --- Configurações e Variáveis Globais (MANDATÓRIO) ---
         
-        // Acesso às variáveis de ambiente do Canvas
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        
-        // CONFIGURAÇÃO DO FIREBASE FORNECIDA PELO USUÁRIO
-        const firebaseConfig = {
-            apiKey: "AIzaSyCqI7tdOwMNwUqnhNyZyPIMqD-sjCFFxPU",
-            authDomain: "cbhlp-assinaturas.firebaseapp.com",
-            projectId: "cbhlp-assinaturas",
-            storageBucket: "cbhlp-assinaturas.firebasestorage.app",
-            messagingSenderId: "817507030657",
-            appId: "1:817507030657:web:c2a7d65850302ba5439f80"
-        };
-        
-        // O token é fornecido pelo Canvas (ou é null se não estiver definido)
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        // Senha de Administrador Simples (MUDAR EM PRODUÇÃO!)
         const ADMIN_PASSWORD = "minhasenhasecreta123";
 
-        // Inicializa o Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
         
-        // Define o nível de log para debug no console
         setLogLevel('debug'); 
 
         let userId = null;
         let isAuthReady = false;
-        let registrationsData = []; // Cache dos dados de registro
+        let registrationsData = []; // Cache dos dados de registro da reunião ATUAL
 
-        // Referência à coleção pública de registros
-        const REGISTRATIONS_COLLECTION = `artifacts/${appId}/public/data/meeting_registrations`;
-
+        // Caminho da Coleção para Registros
+        const REGISTRATIONS_COLLECTION_PATH = `artifacts/${appId}/public/data/meeting_registrations`;
+        
+        // Documento para o estado da reunião
+        const MEETING_STATE_DOC_REF = doc(db, `artifacts/${appId}/public/data/meeting_state/current_meeting`);
+        
+        // Estado da reunião em memória
+        let currentMeetingState = { 
+            isActive: false, 
+            meetingId: null, 
+            meetingName: 'Aguardando Início', 
+            startDate: null 
+        };
+        
         // --- Funções de Utilitário ---
-
-        // Exibe mensagens de status na tela
         function showStatusMessage(message, isError = false) {
             const statusEl = document.getElementById('status-message');
             statusEl.textContent = message;
@@ -364,33 +397,33 @@
             }, 5000);
         }
 
-        // Gera um código de validação de 6 dígitos
         function generateValidationCode() {
             return Math.floor(100000 + Math.random() * 900000).toString();
         }
 
-        // Formata a data de hoje como YYYY-MM-DD
-        function getTodayDate() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
+        function formatDate(timestamp) {
+            if (!timestamp) return '--';
+            const dateObj = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
         }
         
+        function formatDateTime(timestamp) {
+            if (!timestamp) return '--';
+            const dateObj = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+
         // --- 1. Lógica de Autenticação (Setup Inicial) ---
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 userId = user.uid;
-                console.log("Usuário autenticado:", userId);
             } else {
                 try {
-                    // Tenta o login com o token customizado
                     if (initialAuthToken) {
                         await signInWithCustomToken(auth, initialAuthToken);
                     } else {
-                        // Se não houver token, faz login anônimo
                         await signInAnonymously(auth);
                     }
                 } catch (error) {
@@ -398,17 +431,12 @@
                 }
             }
             isAuthReady = true;
-            // Inicia o listener do quórum se a view inicial for quorum ou admin-dashboard
-            const currentView = Array.from(viewSections).find(v => !v.classList.contains('hidden'))?.id;
-            if (currentView === 'quorum' || currentView === 'admin-dashboard') {
-                setupQuorumListener();
-            }
+            setupMeetingStateListener(); // Começa a ouvir o estado da reunião
         });
 
         // --- 2. Controle de Navegação (SPA) ---
         const viewSections = document.querySelectorAll('.view-section');
         
-        // Função para trocar a visualização
         function switchView(targetId) {
             viewSections.forEach(section => {
                 section.classList.add('hidden');
@@ -417,45 +445,39 @@
             if(targetElement) {
                 targetElement.classList.remove('hidden');
             }
-
-            // Atualiza os listeners dependendo da seção
-            if (targetId === 'quorum' && isAuthReady) {
-                setupQuorumListener();
-            } else if (targetId === 'admin-dashboard' && isAuthReady) {
-                setupAdminListener();
-            }
             
             // Certifica-se de que se não for a main-cards-view, ela está escondida
             if (targetId !== 'main-cards-view') {
                  document.getElementById('main-cards-view').classList.add('hidden');
             }
+            
+            // Atualiza a visualização do Quorum/Admin se necessário (o listener de estado cuida do resto)
+            if (targetId === 'quorum') {
+                updateQuorumView();
+            } else if (targetId === 'admin-dashboard') {
+                updateAdminDashboardUI();
+            }
         }
         
-        // Função unificada para lidar com cliques de navegação (Cards)
         function handleViewSwitch(requestedTarget) {
             let targetId = requestedTarget;
             
-            // Lógica para o botão Admin
             if (requestedTarget === 'admin-login') {
+                 // Verifica se o dashboard já está visível (se o usuário já logou)
                  if (!document.getElementById('admin-dashboard').classList.contains('hidden')) {
-                     targetId = 'admin-dashboard'; // Se já estiver logado, vai direto para o dashboard
+                     targetId = 'admin-dashboard'; 
                  } else {
-                     targetId = 'admin-login'; // Caso contrário, vai para o formulário de login
+                     targetId = 'admin-login'; 
                  }
             }
             switchView(targetId);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Define a visualização inicial: main-cards-view
             switchView('main-cards-view'); 
-
-            // Adiciona listener ao cabeçalho (logo/título) para voltar ao Menu Principal
             document.getElementById('main-header').addEventListener('click', () => {
                 switchView('main-cards-view');
             });
-            
-            // Adiciona listeners aos botões da galeria (cards)
             document.addEventListener('click', (e) => {
                 const card = e.target.closest('.menu-card-btn');
                 if (card) {
@@ -464,7 +486,85 @@
             });
         });
         
-        // --- 3. Lógica do Formulário de Registro (1ª Função) ---
+        // --- 3. Lógica do Estado da Reunião (NOVA FUNÇÃO CHAVE) ---
+
+        function updateRegistrationFormVisibility() {
+            const form = document.getElementById('registration-form');
+            const message = document.getElementById('registration-closed-message');
+            
+            if (currentMeetingState.isActive) {
+                form.classList.remove('hidden');
+                message.classList.add('hidden');
+            } else {
+                form.classList.add('hidden');
+                message.classList.remove('hidden');
+            }
+        }
+
+        function updateStatusBar() {
+            const badge = document.getElementById('meeting-status-badge');
+            const nameDisplay = document.getElementById('meeting-name-display');
+            const status = currentMeetingState.isActive ? 'ABERTA' : 'FECHADA';
+            
+            nameDisplay.textContent = currentMeetingState.meetingName;
+            badge.textContent = status;
+
+            badge.className = 'ml-2 px-3 py-1 text-xs font-bold rounded-full transition-colors duration-300';
+            if (currentMeetingState.isActive) {
+                badge.classList.add('bg-brand-success', 'text-gray-900');
+            } else {
+                badge.classList.add('bg-red-400', 'text-white');
+            }
+            
+            updateRegistrationFormVisibility();
+        }
+        
+        function setupMeetingStateListener() {
+            if (!isAuthReady) return;
+
+            onSnapshot(MEETING_STATE_DOC_REF, (docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    currentMeetingState = { 
+                        isActive: false, // Default seguro
+                        meetingId: null,
+                        meetingName: 'Aguardando Início',
+                        startDate: null,
+                        ...docSnapshot.data() 
+                    };
+                } else {
+                    // Se o documento não existir, crie um estado inicial fechado
+                    currentMeetingState = { 
+                        isActive: false, 
+                        meetingId: null, 
+                        meetingName: 'Aguardando Início', 
+                        startDate: null 
+                    };
+                    // Tenta criar o documento inicial no Firestore se ele não existir
+                    setDoc(MEETING_STATE_DOC_REF, currentMeetingState, { merge: true }).catch(e => console.error("Erro ao inicializar o doc de estado:", e));
+                }
+                
+                console.log("Estado da reunião atualizado:", currentMeetingState);
+                updateStatusBar(); // Atualiza a barra de status global
+                updateAdminDashboardUI(); // Atualiza botões do Admin
+
+                // Chama o listener de quórum com o ID da reunião atual
+                const targetMeetingId = currentMeetingState.meetingId;
+                if (targetMeetingId) {
+                    setupQuorumListener(targetMeetingId);
+                } else {
+                    // Limpa dados e gráficos se não houver reunião (pré-início)
+                    registrationsData = [];
+                    updateQuorumCharts(registrationsData);
+                    renderAdminTable(registrationsData);
+                }
+                
+            }, (error) => {
+                console.error("Erro ao ouvir estado da reunião:", error);
+                showStatusMessage("Erro ao carregar estado da reunião. Verifique as Regras de Segurança.", true);
+            });
+        }
+
+        // --- 4. Lógica do Formulário de Registro (Corrigida Novamente) ---
         
         document.getElementById('registration-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -473,36 +573,45 @@
                 showStatusMessage("Aguarde a inicialização do sistema...", true);
                 return;
             }
+            
+            // Verifica se a reunião está ativa
+            if (!currentMeetingState.isActive || !currentMeetingState.meetingId) {
+                showStatusMessage("O registro está fechado. A reunião não está ativa.", true);
+                return;
+            }
 
             const name = document.getElementById('name').value.trim();
             const cpf = document.getElementById('cpf').value.trim();
             const institution = document.getElementById('institution').value.trim();
             const sector = document.getElementById('sector').value;
             const representation = document.getElementById('representation').value;
-            const todayDate = getTodayDate();
             
             const validationCode = generateValidationCode();
             
             try {
-                // 1. Verificar Duplicidade (CPF no mesmo dia)
-                const q = query(collection(db, REGISTRATIONS_COLLECTION), 
+                // Define a Collection Reference dentro do escopo da função
+                const registrationsRef = collection(db, REGISTRATIONS_COLLECTION_PATH); 
+                
+                // 1. Cria a referência do novo documento
+                const newRegistrationDocRef = doc(registrationsRef);
+                
+                // 2. Query para verificar duplicidade, focada apenas no CPF na reunião atual.
+                const q = query(registrationsRef, 
                                 where("cpf", "==", cpf), 
-                                where("date", "==", todayDate));
-                
-                const querySnapshot = await getDocs(q);
-                
-                if (!querySnapshot.empty) {
-                    showStatusMessage(`Seu CPF já está registrado para a reunião de hoje (${todayDate}).`, true);
-                    return;
+                                where("meetingId", "==", currentMeetingState.meetingId));
+
+                // CORREÇÃO: Faz a verificação de duplicidade ANTES da transação.
+                // A função transaction.get() não pode receber um objeto Query, causando o erro 'path'.
+                const preCheckSnapshot = await getDocs(q); 
+                if (!preCheckSnapshot.empty) {
+                    throw new Error("Duplicidade detectada."); 
                 }
                 
-                // 2. Registrar Transação (para minimizar conflitos simultâneos)
+                // 3. Registrar Transação (APENAS O WRITE AGORA)
                 await runTransaction(db, async (transaction) => {
-                    // Refaz a verificação dentro da transação (melhor prática para garantir atomicidade)
-                    const reCheck = await getDocs(q);
-                    if (!reCheck.empty) {
-                        throw "Duplicidade detectada por transação."; // Lança erro para abortar a transação
-                    }
+                    
+                    // Nota: A verificação de duplicidade (leitura) foi feita acima. 
+                    // A transação agora foca na escrita atômica do novo documento.
                     
                     const newRegistration = {
                         name,
@@ -510,71 +619,66 @@
                         institution,
                         sector,
                         representation,
-                        date: todayDate,
                         validationCode,
-                        timestamp: new Date()
+                        meetingId: currentMeetingState.meetingId, 
+                        date: formatDate(currentMeetingState.startDate), 
+                        timestamp: new Date().toISOString() // Salva como ISO string
                     };
                     
-                    // Adiciona o novo documento
-                    const docRef = doc(collection(db, REGISTRATIONS_COLLECTION));
-                    transaction.set(docRef, newRegistration);
+                    // 4. Usa a referência do documento gerada antes da transação
+                    transaction.set(newRegistrationDocRef, newRegistration);
                     
-                    showStatusMessage(`Presença registrada com sucesso! Código de Validação: ${validationCode}`, false);
-                    document.getElementById('registration-form').reset(); // Limpa o formulário
-                    
-                    // Após o registro, retorna para a tela de Cards
-                    switchView('main-cards-view'); 
                 });
+                
+                // Feedback após transação bem sucedida
+                showStatusMessage(`Presença registrada! Código de Validação: ${validationCode}`, false);
+                document.getElementById('registration-form').reset(); 
+                switchView('main-cards-view'); 
 
             } catch (error) {
-                if (error === "Duplicidade detectada por transação.") {
-                    showStatusMessage(`Duplicidade: Seu CPF já foi registrado para a reunião de hoje.`, true);
+                if (error.message === "Duplicidade detectada.") {
+                    showStatusMessage(`Duplicidade: Seu CPF já foi registrado nesta reunião.`, true);
                 } else {
-                    console.error("Erro ao registrar a frequência:", error);
-                    showStatusMessage(`Erro ao registrar: ${error.message || 'Tente novamente.'}`, true);
+                    console.error("Erro CRÍTICO ao registrar a frequência:", error);
+                    showStatusMessage(`Erro ao registrar: ${error.message || 'Verifique o console para detalhes.'}`, true);
                 }
             }
         });
 
-        // --- 4. Lógica do Gráfico de Quórum (2ª Função) ---
+        // --- 5. Lógica do Gráfico de Quórum (Atualizado para meetingId) ---
         
         let sectorChart = null;
         let representationChart = null;
-        
-        // Cores do gráfico baseadas na nova paleta
         const chartColors = ['#176781', '#eac066', '#50c2ab', '#7fb2c7', '#67686a'];
 
         function updateQuorumCharts(data) {
-            const today = getTodayDate();
-            document.getElementById('current-date').textContent = today;
+            document.getElementById('total-presentes').textContent = data.length;
             
-            // Filtra os dados apenas para a reunião de hoje
-            const todayData = data.filter(r => r.date === today);
-            
-            document.getElementById('total-presentes').textContent = todayData.length;
+            const startDateFormatted = currentMeetingState.startDate ? formatDate(currentMeetingState.startDate) : '--';
+            document.getElementById('current-date').textContent = startDateFormatted;
+            document.getElementById('quorum-meeting-name').textContent = `Dados da Reunião: ${currentMeetingState.meetingName}`;
+
 
             // Agrega dados por Setor
-            const sectorCounts = todayData.reduce((acc, curr) => {
+            const sectorCounts = data.reduce((acc, curr) => {
                 acc[curr.sector] = (acc[curr.sector] || 0) + 1;
                 return acc;
             }, {});
             
             // Agrega dados por Representação
-            const representationCounts = todayData.reduce((acc, curr) => {
+            const representationCounts = data.reduce((acc, curr) => {
                 acc[curr.representation] = (acc[curr.representation] || 0) + 1;
                 return acc;
             }, {});
 
             const sectorLabels = Object.keys(sectorCounts);
             const sectorValues = Object.values(sectorCounts);
-            
             const repLabels = Object.keys(representationCounts);
             const repValues = Object.values(representationCounts);
             
             // Atualiza Gráfico de Setores
             if (sectorChart) sectorChart.destroy();
             const sectorCtx = document.getElementById('sectorChart').getContext('2d');
-            // Chart é uma variável global
             sectorChart = new Chart(sectorCtx, {
                 type: 'pie',
                 data: {
@@ -588,17 +692,13 @@
                 },
                 options: {
                     responsive: true,
-                    plugins: {
-                        legend: { position: 'top' },
-                        title: { display: false }
-                    }
+                    plugins: { legend: { position: 'top' }, title: { display: false } }
                 }
             });
             
             // Atualiza Gráfico de Representação
             if (representationChart) representationChart.destroy();
             const repCtx = document.getElementById('representationChart').getContext('2d');
-            // Chart é uma variável global
             representationChart = new Chart(repCtx, {
                 type: 'doughnut',
                 data: {
@@ -612,44 +712,46 @@
                 },
                 options: {
                     responsive: true,
-                    plugins: {
-                        legend: { position: 'top' },
-                        title: { display: false }
-                    }
+                    plugins: { legend: { position: 'top' }, title: { display: false } }
                 }
             });
         }
         
         // Listener em Tempo Real (onSnapshot) para Quórum
-        function setupQuorumListener() {
-            if (!isAuthReady) return;
+        function setupQuorumListener(meetingId) {
+            if (!isAuthReady || !meetingId) {
+                return;
+            }
             
-            const q = query(collection(db, REGISTRATIONS_COLLECTION));
+            // Define a Collection Reference dentro da função
+            const registrationsRef = collection(db, REGISTRATIONS_COLLECTION_PATH); 
             
-            // onSnapshot retorna uma função de "unsubscribe". Para simplificar o SPA de arquivo único, 
-            // não estamos gerenciando o unsubscribe ativamente, mas o novo onSnapshot substituirá o antigo.
+            // Query filtrada pelo meetingId
+            const q = query(registrationsRef, where("meetingId", "==", meetingId));
             
             onSnapshot(q, (snapshot) => {
                 registrationsData = [];
                 snapshot.forEach((doc) => {
                     registrationsData.push({ id: doc.id, ...doc.data() });
                 });
-                console.log("Dados de registro atualizados (onSnapshot).");
+                
+                // Atualiza a view do Quorum/Admin
                 updateQuorumCharts(registrationsData);
-                // Se o admin estiver logado, atualiza a tabela também
-                if (!document.getElementById('admin-dashboard').classList.contains('hidden')) {
-                    renderAdminTable(registrationsData);
-                }
+                renderAdminTable(registrationsData); 
             }, (error) => {
                 console.error("Erro ao ouvir atualizações do Quórum:", error);
                 showStatusMessage("Erro ao carregar dados do quórum.", true);
             });
         }
 
+        function updateQuorumView() {
+            // A atualização do nome da reunião é feita em updateQuorumCharts()
+        }
 
-        // --- 5. Lógica da Área Administrativa (3ª Função) ---
 
-        // 5.1 Login
+        // --- 6. Lógica da Área Administrativa (Controle de Reunião) ---
+
+        // 6.1 Login
         document.getElementById('admin-login-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const password = document.getElementById('admin-password').value;
@@ -657,40 +759,32 @@
             
             if (password === ADMIN_PASSWORD) {
                 errorEl.textContent = "";
-                // Muda a visualização
                 document.getElementById('admin-login').classList.add('hidden');
                 document.getElementById('admin-dashboard').classList.remove('hidden');
-                
-                // Se ainda não estiver escutando, inicia o listener
-                if (registrationsData.length === 0) {
-                     setupQuorumListener();
-                } else {
-                     renderAdminTable(registrationsData);
-                }
+                updateAdminDashboardUI(); // Atualiza a UI do dashboard imediatamente após o login
             } else {
                 errorEl.textContent = "Senha incorreta. Tente novamente.";
                 showStatusMessage("Senha de Admin incorreta.", true);
             }
         });
 
-        // 5.2 Renderização da Tabela
+        // 6.2 Renderização da Tabela
         function renderAdminTable(data) {
             const tableBody = document.getElementById('admin-table-body');
             const loadingMsg = document.getElementById('admin-loading-message');
             tableBody.innerHTML = '';
             
             if (data.length === 0) {
-                loadingMsg.textContent = "Nenhum registro encontrado.";
+                loadingMsg.textContent = "Nenhum registro encontrado para esta reunião.";
                 loadingMsg.classList.remove('hidden');
                 return;
             }
             loadingMsg.classList.add('hidden');
 
-            // Ordena por data/hora mais recente primeiro
-            // Nota: O timestamp pode vir como um objeto Timestamp do Firebase ou como um objeto Date/string
+            // Ordena os dados pela data de registro (timestamp) mais recente
             data.sort((a, b) => {
-                const dateA = a.timestamp.toDate ? a.timestamp.toDate() : new Date(a.timestamp);
-                const dateB = b.timestamp.toDate ? b.timestamp.toDate() : new Date(b.timestamp);
+                const dateA = new Date(a.timestamp);
+                const dateB = new Date(b.timestamp);
                 return dateB - dateA;
             });
 
@@ -698,10 +792,9 @@
                 const row = tableBody.insertRow();
                 row.className = 'hover:bg-gray-100 transition duration-150';
                 
-                const dateObj = reg.timestamp.toDate ? reg.timestamp.toDate() : new Date(reg.timestamp);
-                const timeString = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                const timeString = formatDateTime(reg.timestamp);
                 
-                row.insertCell().textContent = reg.id.substring(0, 4) + '...'; // ID abreviado
+                row.insertCell().textContent = reg.id.substring(0, 4) + '...'; 
                 row.insertCell().textContent = reg.name;
                 row.insertCell().textContent = reg.cpf;
                 row.insertCell().textContent = reg.sector;
@@ -711,31 +804,95 @@
             });
         }
         
-        function setupAdminListener() {
-            // Reusa o listener do Quórum (setupQuorumListener) pois ele já carrega os dados em tempo real para 'registrationsData'
-            // A função setupQuorumListener() será responsável por chamar renderAdminTable quando os dados mudarem.
-            if (registrationsData.length === 0) {
-                // Se não tiver dados, o listener deve ser iniciado
-                setupQuorumListener();
+        // 6.3 Atualização da UI do Dashboard (Botões/Status)
+        function updateAdminDashboardUI() {
+            const statusContainer = document.getElementById('admin-status-badge-container');
+            const infoEl = document.getElementById('admin-meeting-info');
+            const startBtn = document.getElementById('start-meeting-btn');
+            const endBtn = document.getElementById('end-meeting-btn');
+            
+            // Limpa o container
+            statusContainer.innerHTML = '';
+
+            const statusText = currentMeetingState.isActive ? 'Reunião ATIVA (Registros Abertos)' : 'Reunião FECHADA (Registros Suspensos)';
+            const statusClass = currentMeetingState.isActive ? 'bg-brand-success text-white' : 'bg-red-500 text-white';
+            
+            statusContainer.innerHTML = `
+                <span class="text-xl font-bold text-gray-800">STATUS:</span>
+                <span class="px-3 py-1 rounded-full ${statusClass} font-bold text-sm">${statusText}</span>
+            `;
+            
+            startBtn.classList.toggle('hidden', currentMeetingState.isActive);
+            endBtn.classList.toggle('hidden', !currentMeetingState.isActive);
+            
+            if (currentMeetingState.meetingId) {
+                 const startDateFormatted = currentMeetingState.startDate ? formatDate(currentMeetingState.startDate) : 'N/A';
+                 infoEl.textContent = `Dados exibidos: ${currentMeetingState.meetingName} (Início: ${startDateFormatted})`;
             } else {
-                // Se já tiver dados, apenas renderiza
-                renderAdminTable(registrationsData);
+                 infoEl.textContent = `Nenhuma reunião iniciada. Clique em "INICIAR NOVA REUNIÃO" para começar.`;
             }
         }
+        
+        // 6.4 Handlers dos Botões de Controle
+        
+        document.getElementById('start-meeting-btn').addEventListener('click', () => handleAdminMeetingControl('start'));
+        document.getElementById('end-meeting-btn').addEventListener('click', () => handleAdminMeetingControl('end'));
 
-        // 5.3 Download CSV
+        async function handleAdminMeetingControl(action) {
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const docSnapshot = await transaction.get(MEETING_STATE_DOC_REF);
+                    const state = docSnapshot.exists() ? docSnapshot.data() : { isActive: false, meetingId: null, meetingName: 'Aguardando Início', startDate: null };
+
+                    if (action === 'start') {
+                        if (state.isActive) {
+                            return; 
+                        }
+                        const now = new Date();
+                        const newMeetingId = `M${now.getTime()}`;
+                        const newMeetingName = `Reunião de ${now.toLocaleDateString('pt-BR')}`;
+                        
+                        const newState = {
+                            isActive: true,
+                            meetingId: newMeetingId,
+                            meetingName: newMeetingName,
+                            startDate: now.toISOString(), // Salva como ISO string
+                        };
+                        transaction.set(MEETING_STATE_DOC_REF, newState);
+                        showStatusMessage(`Nova reunião (${newMeetingName}) iniciada!`, false); 
+                        
+                    } else if (action === 'end') {
+                        if (!state.isActive) {
+                            return; 
+                        }
+
+                        const newState = {
+                            ...state,
+                            isActive: false, 
+                        };
+                        transaction.set(MEETING_STATE_DOC_REF, newState);
+                        showStatusMessage(`Reunião ${state.meetingName} finalizada. Registros suspensos.`, false); 
+                    }
+                });
+            } catch (error) {
+                console.error(`Erro ao ${action} a reunião:`, error);
+                showStatusMessage(`Erro ao ${action} a reunião. Tente novamente. Verifique as Regras de Segurança.`, true);
+            }
+        }
+        
+        // 6.5 Download CSV (Filtrado pelo meetingId)
         document.getElementById('download-csv').addEventListener('click', () => {
             if (registrationsData.length === 0) {
                 showStatusMessage("Nenhum dado para exportar.", true);
                 return;
             }
-
-            const today = getTodayDate();
             
+            const meetingName = currentMeetingState.meetingName || 'dados_historicos';
+
             let csv = "ID,Nome,CPF,Instituicao,Setor,Representacao,Codigo_Validacao,Data_Reuniao,Timestamp\n";
             
             registrationsData.forEach(reg => {
-                const dateObj = reg.timestamp.toDate ? reg.timestamp.toDate() : new Date(reg.timestamp);
+                const dateObj = new Date(reg.timestamp); // Usa ISO string
                 const timestampString = dateObj.toISOString();
 
                 csv += `${reg.id},"${reg.name}","${reg.cpf}","${reg.institution}","${reg.sector}","${reg.representation}",${reg.validationCode},${reg.date},${timestampString}\n`;
@@ -746,7 +903,7 @@
             if (link.download !== undefined) {
                 const url = URL.createObjectURL(blob);
                 link.setAttribute("href", url);
-                link.setAttribute("download", `frequencia_reuniao_${today}.csv`);
+                link.setAttribute("download", `frequencia_${meetingName.replace(/\s/g, '_')}.csv`);
                 link.style.visibility = 'hidden';
                 document.body.appendChild(link);
                 link.click();
@@ -755,20 +912,22 @@
             }
         });
 
-        // 5.4 Download PDF (Usando jsPDF com autoTable) - CORRIGIDO E APRIMORADO
+        // 6.6 Download PDF (Filtrado pelo meetingId)
         document.getElementById('download-pdf').addEventListener('click', () => {
             if (registrationsData.length === 0) {
                 showStatusMessage("Nenhum dado para exportar.", true);
                 return;
             }
 
-            // 1. FORMATAR A DATA (DD/MM/YYYY)
-            const todayStr_YYYYMMDD = getTodayDate(); // "YYYY-MM-DD"
-            const parts = todayStr_YYYYMMDD.split('-');
-            const todayStr_DDMMYYYY = `${parts[2]}/${parts[1]}/${parts[0]}`; // "DD/MM/YYYY"
+            // Certifique-se de que jspdf está carregado
+            if (typeof window.jspdf === 'undefined') {
+                 showStatusMessage("Erro: A biblioteca jspdf não está carregada.", true);
+                 return;
+            }
             
-            // Acessa o construtor jsPDF através do objeto global 'jspdf'
             const doc = new jspdf.jsPDF(); 
+            const meetingName = currentMeetingState.meetingName || 'Registro de Frequência';
+            const startDate = currentMeetingState.startDate ? formatDate(currentMeetingState.startDate) : 'N/A';
             
             // 2. ADICIONAR O CABEÇALHO PERSONALIZADO
             doc.setFontSize(16);
@@ -777,13 +936,12 @@
             
             doc.setFontSize(12);
             doc.setFont("helvetica", "normal");
-            doc.text(`Registro de Frequência da reunião realizada em ${todayStr_DDMMYYYY}`, doc.internal.pageSize.getWidth() / 2, 30, { align: 'center' });
+            doc.text(`${meetingName} | Início em ${startDate}`, doc.internal.pageSize.getWidth() / 2, 30, { align: 'center' });
 
             // 3. PREPARAR DADOS PARA autoTable
             const headers = [["Nome", "Instituição/Órgão", "Setor", "Representação", "Cód. Validação"]];
             
             const body = registrationsData
-                // Ordena por nome alfabeticamente para a lista de presença
                 .sort((a, b) => a.name.localeCompare(b.name)) 
                 .map(reg => {
                     return [
@@ -796,8 +954,6 @@
                 });
 
             // 4. RENDERIZAR A TABELA USANDO autoTable
-            
-            // Verifica se a função autoTable está disponível
             if (typeof doc.autoTable === 'undefined') {
                 showStatusMessage("Erro: jspdf-autotable não carregado. Verifique as dependências.", true);
                 return;
@@ -810,39 +966,34 @@
                 theme: 'striped', // Tema listrado
                 styles: {
                     font: 'helvetica',
-                    fontSize: 9, // Tamanho da fonte menor
+                    fontSize: 9, 
                     cellPadding: 1.5,
                     lineWidth: 0.1, 
                     lineColor: '#e0e0e0'
                 },
                 headStyles: {
                     fillColor: [23, 103, 129], // brand-primary: #176781
-                    textColor: 255, // Branco
+                    textColor: 255, 
                     fontStyle: 'bold',
                     fontSize: 10
                 },
-                // Ajuste de largura das colunas
                 columnStyles: {
-                    0: { cellWidth: 50 }, // Nome
-                    1: { cellWidth: 50 }, // Instituição/Órgão
-                    2: { cellWidth: 30 }, // Setor
-                    3: { cellWidth: 30 }, // Representação
-                    4: { cellWidth: 30 }, // Código
+                    0: { cellWidth: 50 }, 
+                    1: { cellWidth: 50 }, 
+                    2: { cellWidth: 30 }, 
+                    3: { cellWidth: 30 }, 
+                    4: { cellWidth: 30 }, 
                 },
                 didDrawPage: (data) => {
-                    // Adiciona rodapé com número de página
                     doc.setFontSize(8);
                     doc.text("Página " + data.pageNumber, data.settings.margin.left, doc.internal.pageSize.height - 10);
                 }
             });
 
-            // Pega a posição Y final da tabela
             let y = doc.autoTable.previous.finalY;
 
             // 5. ADICIONAR O LINK DE VALIDAÇÃO
-            y += 20; // Espaço após a tabela
-            
-            // Verifica se precisa de nova página para o link
+            y += 20; 
             if (y > doc.internal.pageSize.height - 20) { 
                 doc.addPage();
                 y = 20;
@@ -850,22 +1001,21 @@
             
             doc.setFontSize(9);
             doc.setFont("helvetica", "italic");
-            doc.setTextColor(0, 0, 0); // Volta a cor padrão
+            doc.setTextColor(0, 0, 0); 
             doc.text("Valide este e outros registros no portal oficial:", 10, y);
             y += 5;
             
-            const siteLink = window.location.href; // Pega a URL atual
-            doc.setTextColor(40, 58, 119); // Cor de link (azul)
+            const siteLink = window.location.href; 
+            doc.setTextColor(40, 58, 119); 
             doc.textWithLink(siteLink, 10, y, { url: siteLink });
             
-            // Volta a cor de texto padrão
             doc.setTextColor(0, 0, 0);
 
-            doc.save(`frequencia_reuniao_${todayStr_DDMMYYYY}.pdf`);
+            doc.save(`frequencia_${meetingName.replace(/\s/g, '_')}.pdf`);
             showStatusMessage("PDF gerado com sucesso!", false);
         });
 
-        // --- 6. Lógica de Validação (4ª Função) ---
+        // --- 7. Lógica de Validação ---
         
         document.getElementById('validation-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -885,14 +1035,16 @@
             }
 
             try {
-                // Busca o registro pelo código de validação
-                const q = query(collection(db, REGISTRATIONS_COLLECTION), 
+                // Define a Collection Reference dentro da função
+                const registrationsRef = collection(db, REGISTRATIONS_COLLECTION_PATH); 
+                
+                // Busca o registro pelo código de validação.
+                const q = query(registrationsRef, 
                                 where("validationCode", "==", code));
                 
                 const querySnapshot = await getDocs(q);
 
                 if (querySnapshot.empty) {
-                    // Estilo para Erro/Não Encontrado
                     resultEl.className = 'mt-6 p-6 rounded-xl bg-red-100 text-red-800 font-medium shadow-xl border-l-4 border-red-500';
                     resultEl.innerHTML = `
                         <div class="flex items-center space-x-3">
@@ -903,12 +1055,19 @@
                     `;
                 } else {
                     const data = querySnapshot.docs[0].data();
-                    // Estilo para Sucesso (com cores da paleta)
+                    const isCurrent = data.meetingId === currentMeetingState.meetingId;
+                    const meetingStatus = isCurrent 
+                                            ? '<span class="text-brand-success"> (Reunião Atual)</span>' 
+                                            : '<span class="text-brand-neutral"> (Reunião Histórica)</span>';
+
                     resultEl.className = 'mt-6 p-6 rounded-xl bg-brand-success/20 text-brand-primary font-medium shadow-xl border-l-4 border-brand-success';
+                    
+                    const registrationDate = data.timestamp ? new Date(data.timestamp).toLocaleString('pt-BR') : 'Data Indisponível';
+
                     resultEl.innerHTML = `
                         <div class="flex items-center space-x-3">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle text-brand-success"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M9 11l3 3L22 4"/></svg>
-                            <p class="font-bold text-lg text-brand-primary">PRESENÇA CONFIRMADA!</p>
+                            <p class="font-bold text-lg text-brand-primary">PRESENÇA CONFIRMADA! ${meetingStatus}</p>
                         </div>
                         <div class="mt-3 space-y-1">
                             <p><strong>Nome:</strong> ${data.name}</p>
@@ -916,7 +1075,7 @@
                             <p><strong>Setor:</strong> ${data.sector}</p>
                             <p><strong>Data da Reunião:</strong> <span class="font-semibold">${data.date}</span></p>
                         </div>
-                        <p class="mt-3 text-xs italic text-gray-600">Este registro foi feito em ${data.timestamp.toDate().toLocaleString('pt-BR')}.</p>
+                        <p class="mt-3 text-xs italic text-gray-600">Este registro foi feito em ${registrationDate}.</p>
                     `;
                 }
                 resultEl.classList.remove('hidden');
