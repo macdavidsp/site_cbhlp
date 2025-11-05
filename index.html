@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Frequência e Quórum</title>
+    <!-- Carrega Tailwind CSS para estilização moderna e responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carrega a fonte Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FIX: Carrega Chart.js via tag script padrão para evitar erro de importação de módulo -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- FIX: Carrega jsPDF via tag script padrão para evitar erro de importação de módulo -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Estilos customizados para botões e foco */
+        .btn-primary {
+            @apply bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-indigo-700 transition duration-300 ease-in-out;
+        }
+        .btn-secondary {
+            @apply bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-gray-300 transition duration-300 ease-in-out;
+        }
+        .input-field {
+            @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150;
+        }
+        .container-card {
+            @apply p-6 md:p-10 bg-white shadow-xl rounded-xl max-w-4xl w-full mx-auto my-8;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <div id="app" class="flex flex-col min-h-screen">
+        <!-- Navegação Principal -->
+        <header class="bg-white shadow-lg sticky top-0 z-50">
+            <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-indigo-600">Registro de Reunião</h1>
+                <div class="flex space-x-2 sm:space-x-4">
+                    <button class="nav-btn btn-secondary" data-target="registro">Registro</button>
+                    <button class="nav-btn btn-secondary" data-target="quorum">Quórum</button>
+                    <button class="nav-btn btn-secondary" data-target="validacao">Validação</button>
+                    <button class="nav-btn btn-secondary" data-target="admin-login">Admin</button>
+                </div>
+            </nav>
+        </header>
+
+        <main class="flex-grow p-4 sm:p-6 lg:p-8">
+
+            <!-- Mensagem de Status (Modal/Notificação) -->
+            <div id="status-message" class="fixed top-20 right-4 p-4 rounded-lg shadow-lg text-white font-medium transition-opacity duration-300 opacity-0 z-50 pointer-events-none" style="min-width: 300px;"></div>
+
+            <!-- 1. Seção de Registro de Frequência (Padrão) -->
+            <section id="registro" class="view-section container-card">
+                <h2 class="text-3xl font-bold mb-6 text-gray-800 border-b pb-2">Registro de Frequência</h2>
+                <form id="registration-form" class="space-y-6">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
+                        <input type="text" id="name" required class="input-field" placeholder="Seu Nome">
+                    </div>
+                    <div>
+                        <label for="cpf" class="block text-sm font-medium text-gray-700 mb-1">CPF (apenas números)</label>
+                        <input type="text" id="cpf" required pattern="\d{11}" maxlength="11" title="CPF deve ter 11 dígitos numéricos." class="input-field" placeholder="Ex: 12345678900">
+                    </div>
+                    <div>
+                        <label for="institution" class="block text-sm font-medium text-gray-700 mb-1">Instituição / Órgão</label>
+                        <input type="text" id="institution" required class="input-field" placeholder="Nome da Instituição">
+                    </div>
+                    <div>
+                        <label for="sector" class="block text-sm font-medium text-gray-700 mb-1">Setor</label>
+                        <select id="sector" required class="input-field">
+                            <option value="">Selecione o Setor</option>
+                            <option value="Usuario">Usuário</option>
+                            <option value="Poder Público">Poder Público</option>
+                            <option value="Sociedade Civil">Sociedade Civil</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="representation" class="block text-sm font-medium text-gray-700 mb-1">Representação</label>
+                        <select id="representation" required class="input-field">
+                            <option value="">Selecione a Representação</option>
+                            <option value="Titular">Titular</option>
+                            <option value="Suplente">Suplente</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary w-full">Registrar Presença</button>
+                </form>
+            </section>
+
+            <!-- 2. Seção de Quórum (Gráfico) -->
+            <section id="quorum" class="view-section container-card hidden">
+                <h2 class="text-3xl font-bold mb-6 text-gray-800 border-b pb-2">Acompanhamento do Quórum</h2>
+                <div class="mb-4">
+                    <p class="text-lg font-medium">Data da Reunião Atual: <span id="current-date" class="text-indigo-600 font-bold">--</span></p>
+                    <p class="text-lg font-medium">Total de Presentes: <span id="total-presentes" class="text-indigo-600 font-bold">0</span></p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Gráfico 1: Setores -->
+                    <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
+                        <h3 class="text-xl font-semibold mb-3 text-gray-700">Presença por Setor</h3>
+                        <canvas id="sectorChart" class="w-full"></canvas>
+                    </div>
+                    <!-- Gráfico 2: Representação -->
+                    <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
+                        <h3 class="text-xl font-semibold mb-3 text-gray-700">Presença por Representação</h3>
+                        <canvas id="representationChart" class="w-full"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Seção de Login Admin -->
+            <section id="admin-login" class="view-section container-card hidden max-w-md">
+                <h2 class="text-3xl font-bold mb-6 text-gray-800 border-b pb-2">Acesso de Administrador</h2>
+                <form id="admin-login-form" class="space-y-4">
+                    <div>
+                        <label for="admin-password" class="block text-sm font-medium text-gray-700 mb-1">Senha de Administrador</label>
+                        <!-- A SENHA DO ADMIN É DEFINIDA NO JAVASCRIPT ABAIXO (ADMIN_PASSWORD) -->
+                        <input type="password" id="admin-password" required class="input-field" placeholder="Digite a senha">
+                    </div>
+                    <button type="submit" class="btn-primary w-full">Entrar</button>
+                    <p class="text-sm text-red-500" id="admin-login-error"></p>
+                </form>
+            </section>
+
+            <!-- 3. Seção de Administração (Dashboard) -->
+            <section id="admin-dashboard" class="view-section container-card hidden">
+                <div class="flex justify-between items-center mb-6 border-b pb-2">
+                    <h2 class="text-3xl font-bold text-gray-800">Dashboard de Administração</h2>
+                    <div class="flex space-x-2">
+                        <button id="download-csv" class="btn-secondary">Download CSV</button>
+                        <button id="download-pdf" class="btn-primary">Download PDF</button>
+                    </div>
+                </div>
+
+                <!-- Tabela de Dados -->
+                <div class="overflow-x-auto bg-gray-50 rounded-lg shadow-inner p-4">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CPF</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Setor</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rep.</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cód. Validação</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Dados serão inseridos aqui pelo JavaScript -->
+                        </tbody>
+                    </table>
+                    <p id="admin-loading-message" class="text-center py-4 text-gray-500">Carregando dados...</p>
+                </div>
+            </section>
+
+            <!-- 4. Seção de Validação de Reunião -->
+            <section id="validacao" class="view-section container-card hidden max-w-md">
+                <h2 class="text-3xl font-bold mb-6 text-gray-800 border-b pb-2">Validação de Presença</h2>
+                <form id="validation-form" class="space-y-4">
+                    <div>
+                        <label for="validation-code-input" class="block text-sm font-medium text-gray-700 mb-1">Código de Validação</label>
+                        <input type="text" id="validation-code-input" required class="input-field" placeholder="Digite o código de 6 dígitos">
+                    </div>
+                    <button type="submit" class="btn-primary w-full">Validar Presença</button>
+                </form>
+                <div id="validation-result" class="mt-6 p-4 rounded-lg bg-indigo-100 text-indigo-800 font-medium hidden">
+                    <!-- Resultado da validação será inserido aqui -->
+                </div>
+            </section>
+
+        </main>
+        <footer class="bg-gray-800 text-white p-4 text-center text-sm">
+            Sistema de Registro de Frequência | Desenvolvido com Firebase & Tailwind CSS
+        </footer>
+    </div>
+
+    <!-- Carrega as bibliotecas do Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, onSnapshot, runTransaction, doc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Carrega as bibliotecas externas necessárias
+        // Chart.js e jsPDF agora são carregados globalmente por tags <script> normais.
+        // REMOVIDO: import { jsPDF } from '...';
+
+        // --- Configurações e Variáveis Globais (MANDATÓRIO) ---
+        // Acesso às variáveis de ambiente do Canvas
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Senha de Administrador Simples (MUDAR EM PRODUÇÃO!)
+        const ADMIN_PASSWORD = "minhasenhasecreta123";
+
+        // Inicializa o Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        // Define o nível de log para debug no console
+        setLogLevel('debug'); 
+
+        let userId = null;
+        let isAuthReady = false;
+        let registrationsData = []; // Cache dos dados de registro
+
+        // Referência à coleção pública de registros
+        const REGISTRATIONS_COLLECTION = `artifacts/${appId}/public/data/meeting_registrations`;
+
+        // --- Funções de Utilitário ---
+
+        // Exibe mensagens de status na tela
+        function showStatusMessage(message, isError = false) {
+            const statusEl = document.getElementById('status-message');
+            statusEl.textContent = message;
+            statusEl.className = 'fixed top-20 right-4 p-4 rounded-lg shadow-lg font-medium transition-opacity duration-300 z-50';
+            
+            if (isError) {
+                statusEl.classList.add('bg-red-500', 'text-white');
+            } else {
+                statusEl.classList.add('bg-green-500', 'text-white');
+            }
+            
+            statusEl.classList.remove('opacity-0', 'pointer-events-none');
+            statusEl.classList.add('opacity-100');
+
+            setTimeout(() => {
+                statusEl.classList.remove('opacity-100');
+                statusEl.classList.add('opacity-0', 'pointer-events-none');
+            }, 5000);
+        }
+
+        // Gera um código de validação de 6 dígitos
+        function generateValidationCode() {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        }
+
+        // Formata a data de hoje como YYYY-MM-DD
+        function getTodayDate() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        // --- 1. Lógica de Autenticação (Setup Inicial) ---
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                console.log("Usuário autenticado:", userId);
+            } else {
+                try {
+                    // Tenta o login com o token customizado
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        // Se não houver token, faz login anônimo
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Erro na autenticação inicial:", error);
+                }
+            }
+            isAuthReady = true;
+            // Inicia o listener do quórum após a autenticação
+            if (document.querySelector('#quorum').classList.contains('hidden') === false) {
+                setupQuorumListener();
+            }
+            if (document.querySelector('#admin-dashboard').classList.contains('hidden') === false) {
+                setupAdminListener();
+            }
+        });
+
+        // --- 2. Controle de Navegação (SPA) ---
+        const viewSections = document.querySelectorAll('.view-section');
+        const navBtns = document.querySelectorAll('.nav-btn');
+
+        function switchView(targetId) {
+            viewSections.forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(targetId).classList.remove('hidden');
+
+            // Atualiza os listeners dependendo da seção
+            if (targetId === 'quorum' && isAuthReady) {
+                setupQuorumListener();
+            } else if (targetId === 'admin-dashboard' && isAuthReady) {
+                setupAdminListener();
+            }
+            
+            navBtns.forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('btn-secondary');
+                if (btn.dataset.target === targetId || (btn.dataset.target === 'admin-login' && targetId === 'admin-dashboard')) {
+                     btn.classList.remove('btn-secondary');
+                     btn.classList.add('bg-indigo-600', 'text-white');
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Define a visualização inicial
+            switchView('registro'); 
+
+            // Adiciona listeners aos botões de navegação
+            navBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetId = btn.dataset.target;
+                    // Se for o botão Admin, verifica se está logado
+                    if (targetId === 'admin-login' && document.getElementById('admin-dashboard').classList.contains('hidden')) {
+                         switchView('admin-login');
+                    } else if (targetId === 'admin-login' && !document.getElementById('admin-dashboard').classList.contains('hidden')) {
+                         switchView('admin-dashboard');
+                    } else {
+                         switchView(targetId);
+                    }
+                });
+            });
+        });
+        
+        // --- 3. Lógica do Formulário de Registro (1ª Função) ---
+        
+        document.getElementById('registration-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!isAuthReady) {
+                showStatusMessage("Aguarde a inicialização do sistema...", true);
+                return;
+            }
+
+            const name = document.getElementById('name').value.trim();
+            const cpf = document.getElementById('cpf').value.trim();
+            const institution = document.getElementById('institution').value.trim();
+            const sector = document.getElementById('sector').value;
+            const representation = document.getElementById('representation').value;
+            const todayDate = getTodayDate();
+            
+            const validationCode = generateValidationCode();
+            
+            try {
+                // 1. Verificar Duplicidade (CPF no mesmo dia)
+                const q = query(collection(db, REGISTRATIONS_COLLECTION), 
+                                where("cpf", "==", cpf), 
+                                where("date", "==", todayDate));
+                
+                const querySnapshot = await getDocs(q);
+                
+                if (!querySnapshot.empty) {
+                    showStatusMessage(`Seu CPF já está registrado para a reunião de hoje (${todayDate}).`, true);
+                    return;
+                }
+                
+                // 2. Registrar Transação (para minimizar conflitos simultâneos)
+                await runTransaction(db, async (transaction) => {
+                    // Refaz a verificação dentro da transação (melhor prática para garantir atomicidade)
+                    const reCheck = await getDocs(q);
+                    if (!reCheck.empty) {
+                        throw "Duplicidade detectada por transação."; // Lança erro para abortar a transação
+                    }
+                    
+                    const newRegistration = {
+                        name,
+                        cpf,
+                        institution,
+                        sector,
+                        representation,
+                        date: todayDate,
+                        validationCode,
+                        timestamp: new Date()
+                    };
+                    
+                    // Adiciona o novo documento
+                    const docRef = doc(collection(db, REGISTRATIONS_COLLECTION));
+                    transaction.set(docRef, newRegistration);
+                    
+                    showStatusMessage(`Presença registrada com sucesso! Código de Validação: ${validationCode}`, false);
+                    document.getElementById('registration-form').reset(); // Limpa o formulário
+                });
+
+            } catch (error) {
+                if (error === "Duplicidade detectada por transação.") {
+                    showStatusMessage(`Duplicidade: Seu CPF já foi registrado para a reunião de hoje.`, true);
+                } else {
+                    console.error("Erro ao registrar a frequência:", error);
+                    showStatusMessage(`Erro ao registrar: ${error.message || 'Tente novamente.'}`, true);
+                }
+            }
+        });
+
+        // --- 4. Lógica do Gráfico de Quórum (2ª Função) ---
+        
+        let sectorChart = null;
+        let representationChart = null;
+
+        function updateQuorumCharts(data) {
+            const today = getTodayDate();
+            document.getElementById('current-date').textContent = today;
+            
+            // Filtra os dados apenas para a reunião de hoje
+            const todayData = data.filter(r => r.date === today);
+            
+            document.getElementById('total-presentes').textContent = todayData.length;
+
+            // Agrega dados por Setor
+            const sectorCounts = todayData.reduce((acc, curr) => {
+                acc[curr.sector] = (acc[curr.sector] || 0) + 1;
+                return acc;
+            }, {});
+            
+            // Agrega dados por Representação
+            const representationCounts = todayData.reduce((acc, curr) => {
+                acc[curr.representation] = (acc[curr.representation] || 0) + 1;
+                return acc;
+            }, {});
+
+            const sectorLabels = Object.keys(sectorCounts);
+            const sectorValues = Object.values(sectorCounts);
+            
+            const repLabels = Object.keys(representationCounts);
+            const repValues = Object.values(representationCounts);
+            
+            // Cores
+            const colors = ['#4F46E5', '#9333EA', '#14B8A6', '#F59E0B'];
+
+            // Atualiza Gráfico de Setores
+            if (sectorChart) sectorChart.destroy();
+            const sectorCtx = document.getElementById('sectorChart').getContext('2d');
+            // Chart é uma variável global
+            sectorChart = new Chart(sectorCtx, {
+                type: 'pie',
+                data: {
+                    labels: sectorLabels,
+                    datasets: [{
+                        label: 'Presença por Setor',
+                        data: sectorValues,
+                        backgroundColor: sectorLabels.map((_, i) => colors[i % colors.length]),
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top' },
+                        title: { display: false }
+                    }
+                }
+            });
+            
+            // Atualiza Gráfico de Representação
+            if (representationChart) representationChart.destroy();
+            const repCtx = document.getElementById('representationChart').getContext('2d');
+            // Chart é uma variável global
+            representationChart = new Chart(repCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: repLabels,
+                    datasets: [{
+                        label: 'Presença por Representação',
+                        data: repValues,
+                        backgroundColor: repLabels.map((_, i) => colors[i % colors.length]),
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top' },
+                        title: { display: false }
+                    }
+                }
+            });
+        }
+        
+        // Listener em Tempo Real (onSnapshot) para Quórum
+        function setupQuorumListener() {
+            if (!isAuthReady) return;
+            
+            const q = query(collection(db, REGISTRATIONS_COLLECTION));
+            
+            // Remove o listener anterior se existir (apenas para este escopo, mas onSnapshot retorna uma função de "unsubscribe")
+            // Como este listener é crucial e só é chamado uma vez no início ou ao trocar de tela, não farei o unsubscribe complexo.
+            
+            onSnapshot(q, (snapshot) => {
+                registrationsData = [];
+                snapshot.forEach((doc) => {
+                    registrationsData.push({ id: doc.id, ...doc.data() });
+                });
+                console.log("Dados de registro atualizados (onSnapshot).");
+                updateQuorumCharts(registrationsData);
+                // Se o admin estiver logado, atualiza a tabela também
+                if (!document.getElementById('admin-dashboard').classList.contains('hidden')) {
+                    renderAdminTable(registrationsData);
+                }
+            }, (error) => {
+                console.error("Erro ao ouvir atualizações do Quórum:", error);
+                showStatusMessage("Erro ao carregar dados do quórum.", true);
+            });
+        }
+
+
+        // --- 5. Lógica da Área Administrativa (3ª Função) ---
+
+        // 5.1 Login
+        document.getElementById('admin-login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const password = document.getElementById('admin-password').value;
+            const errorEl = document.getElementById('admin-login-error');
+            
+            if (password === ADMIN_PASSWORD) {
+                errorEl.textContent = "";
+                switchView('admin-dashboard');
+                // Se ainda não estiver escutando, inicia o listener
+                if (registrationsData.length === 0) {
+                     setupQuorumListener();
+                } else {
+                     renderAdminTable(registrationsData);
+                }
+            } else {
+                errorEl.textContent = "Senha incorreta. Tente novamente.";
+                showStatusMessage("Senha de Admin incorreta.", true);
+            }
+        });
+
+        // 5.2 Renderização da Tabela
+        function renderAdminTable(data) {
+            const tableBody = document.getElementById('admin-table-body');
+            const loadingMsg = document.getElementById('admin-loading-message');
+            tableBody.innerHTML = '';
+            
+            if (data.length === 0) {
+                loadingMsg.textContent = "Nenhum registro encontrado.";
+                loadingMsg.classList.remove('hidden');
+                return;
+            }
+            loadingMsg.classList.add('hidden');
+
+            // Ordena por data/hora mais recente primeiro
+            // Nota: O timestamp pode vir como um objeto Timestamp do Firebase ou como um objeto Date/string
+            data.sort((a, b) => {
+                const dateA = a.timestamp.toDate ? a.timestamp.toDate() : new Date(a.timestamp);
+                const dateB = b.timestamp.toDate ? b.timestamp.toDate() : new Date(b.timestamp);
+                return dateB - dateA;
+            });
+
+            data.forEach(reg => {
+                const row = tableBody.insertRow();
+                row.className = 'hover:bg-gray-50';
+                
+                const dateObj = reg.timestamp.toDate ? reg.timestamp.toDate() : new Date(reg.timestamp);
+                const timeString = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                
+                row.insertCell().textContent = reg.id.substring(0, 4) + '...'; // ID abreviado
+                row.insertCell().textContent = reg.name;
+                row.insertCell().textContent = reg.cpf;
+                row.insertCell().textContent = reg.sector;
+                row.insertCell().textContent = reg.representation;
+                row.insertCell().textContent = reg.validationCode;
+                row.insertCell().textContent = `${reg.date} (${timeString})`;
+            });
+        }
+        
+        function setupAdminListener() {
+            // Reusa o listener do Quórum (setupQuorumListener) pois ele já carrega os dados em tempo real para 'registrationsData'
+            // A função setupQuorumListener() será responsável por chamar renderAdminTable quando os dados mudarem.
+            if (registrationsData.length === 0) {
+                // Se não tiver dados, o listener deve ser iniciado
+                setupQuorumListener();
+            } else {
+                // Se já tiver dados, apenas renderiza
+                renderAdminTable(registrationsData);
+            }
+        }
+
+        // 5.3 Download CSV
+        document.getElementById('download-csv').addEventListener('click', () => {
+            if (registrationsData.length === 0) {
+                showStatusMessage("Nenhum dado para exportar.", true);
+                return;
+            }
+
+            const today = getTodayDate();
+            
+            let csv = "ID,Nome,CPF,Instituicao,Setor,Representacao,Codigo_Validacao,Data_Reuniao,Timestamp\n";
+            
+            registrationsData.forEach(reg => {
+                const dateObj = reg.timestamp.toDate ? reg.timestamp.toDate() : new Date(reg.timestamp);
+                const timestampString = dateObj.toISOString();
+
+                csv += `${reg.id},"${reg.name}","${reg.cpf}","${reg.institution}","${reg.sector}","${reg.representation}",${reg.validationCode},${reg.date},${timestampString}\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", `frequencia_reuniao_${today}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showStatusMessage("CSV gerado com sucesso!", false);
+            }
+        });
+
+        // 5.4 Download PDF (Usando jsPDF)
+        document.getElementById('download-pdf').addEventListener('click', () => {
+            if (registrationsData.length === 0) {
+                showStatusMessage("Nenhum dado para exportar.", true);
+                return;
+            }
+
+            const today = getTodayDate();
+            
+            // CORRIGIDO: Acessa o construtor jsPDF através do objeto global 'jspdf' (minúsculo)
+            // que foi criado pelo script UMD carregado globalmente.
+            const doc = new jspdf.jsPDF(); 
+            doc.setFontSize(18);
+            doc.text(`Relatório de Frequência - ${today}`, 10, 10);
+            
+            const headers = [["ID (Abrev)", "Nome", "CPF", "Setor", "Rep.", "Código", "Data/Hora"]];
+            
+            const body = registrationsData.map(reg => {
+                const dateObj = reg.timestamp.toDate ? reg.timestamp.toDate() : new Date(reg.timestamp);
+                const timeString = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                return [
+                    reg.id.substring(0, 4) + '...',
+                    reg.name,
+                    reg.cpf,
+                    reg.sector,
+                    reg.representation,
+                    reg.validationCode,
+                    `${reg.date} ${timeString}`
+                ];
+            });
+
+            // Renderiza cabeçalho e corpo da tabela
+            let y = 20;
+            doc.setFontSize(10);
+            const tableData = headers.concat(body);
+            
+            // Renderiza cabeçalho
+            doc.setFont("helvetica", "bold");
+            let x = 10;
+            const columnWidths = [15, 45, 25, 25, 20, 20, 30]; // Larguras aproximadas para A4
+
+            headers[0].forEach((header, index) => {
+                doc.text(header, x, y);
+                x += columnWidths[index];
+            });
+            y += 5;
+            doc.line(10, y, 200, y); // Linha separadora
+            y += 5;
+
+            // Renderiza corpo
+            doc.setFont("helvetica", "normal");
+            tableData.slice(1).forEach((row) => {
+                x = 10;
+                row.forEach((cell, index) => {
+                    doc.text(cell.toString(), x, y, { maxWidth: columnWidths[index] - 2 });
+                    x += columnWidths[index];
+                });
+                y += 7;
+                // Adiciona nova página se necessário
+                if (y > 280) {
+                    doc.addPage();
+                    y = 10;
+                }
+            });
+
+            doc.save(`frequencia_reuniao_${today}.pdf`);
+            showStatusMessage("PDF gerado com sucesso!", false);
+        });
+
+        // --- 6. Lógica de Validação (4ª Função) ---
+        
+        document.getElementById('validation-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!isAuthReady) {
+                showStatusMessage("Aguarde a inicialização do sistema...", true);
+                return;
+            }
+
+            const code = document.getElementById('validation-code-input').value.trim();
+            const resultEl = document.getElementById('validation-result');
+            resultEl.classList.add('hidden');
+
+            if (code.length !== 6) {
+                showStatusMessage("O código deve ter 6 dígitos.", true);
+                return;
+            }
+
+            try {
+                // Busca o registro pelo código de validação
+                const q = query(collection(db, REGISTRATIONS_COLLECTION), 
+                                where("validationCode", "==", code));
+                
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    resultEl.className = 'mt-6 p-4 rounded-lg bg-red-100 text-red-800 font-medium';
+                    resultEl.textContent = `Código não encontrado. Nenhuma presença registrada com o código ${code}.`;
+                } else {
+                    const data = querySnapshot.docs[0].data();
+                    resultEl.className = 'mt-6 p-4 rounded-lg bg-green-100 text-green-800 font-medium';
+                    resultEl.innerHTML = `
+                        <p class="font-bold text-lg">PRESENÇA CONFIRMADA!</p>
+                        <p><strong>Nome:</strong> ${data.name}</p>
+                        <p><strong>Instituição:</strong> ${data.institution}</p>
+                        <p><strong>Setor:</strong> ${data.sector}</p>
+                        <p><strong>Data da Reunião:</strong> ${data.date}</p>
+                        <p class="mt-2 text-sm italic">Este registro foi feito em ${data.timestamp.toDate().toLocaleString('pt-BR')}.</p>
+                    `;
+                }
+                resultEl.classList.remove('hidden');
+            } catch (error) {
+                console.error("Erro na validação do código:", error);
+                showStatusMessage(`Erro ao validar o código: ${error.message || 'Tente novamente.'}`, true);
+            }
+        });
+        
+    </script>
+</body>
+</html>
