@@ -436,6 +436,7 @@
         });
 
         // --- 2. Controle de Navegação (SPA) ---
+        
         const viewSections = document.querySelectorAll('.view-section');
         
         function switchView(targetId) {
@@ -447,13 +448,12 @@
                 targetElement.classList.remove('hidden');
             }
             
-            // Certifica-se de que a visualização principal do menu está escondida se não for ela mesma
-            document.getElementById('main-cards-view').classList.add('hidden');
+            // Garante que o menu principal seja visível se for o alvo
             if (targetId === 'main-cards-view') {
                  document.getElementById('main-cards-view').classList.remove('hidden');
             }
             
-            // Atualiza a visualização do Quorum/Admin se necessário (o listener de estado cuida do resto)
+            // Atualiza a visualização do Quorum/Admin se necessário
             if (targetId === 'quorum') {
                 updateQuorumView();
             } else if (targetId === 'admin-dashboard') {
@@ -474,28 +474,31 @@
             }
             switchView(targetId);
         }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            switchView('main-cards-view'); 
-            document.getElementById('main-header').addEventListener('click', () => {
-                switchView('main-cards-view');
-            });
-            
-            // CORREÇÃO ROBUSTA: Anexa o listener de clique diretamente a CADA botão de menu.
-            const menuButtons = document.querySelectorAll('.menu-card-btn');
-
-            menuButtons.forEach(button => {
-                button.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    // Garante que o target seja o valor do atributo data-target
-                    const target = button.dataset.target; 
-                    if (target) {
-                        handleViewSwitch(target);
-                    }
-                });
-            });
-            // FIM DA CORREÇÃO
+        
+        // *** CORREÇÃO DE EXECUÇÃO: Executa a configuração de navegação imediatamente. ***
+        // O script é um módulo no final do body, então os elementos já estão disponíveis.
+        
+        // 1. Inicia no Menu Principal
+        switchView('main-cards-view'); 
+        
+        // 2. Listener do Header para voltar ao Menu
+        document.getElementById('main-header').addEventListener('click', () => {
+            switchView('main-cards-view');
         });
+        
+        // 3. Listener para os botões de Navegação (Abas)
+        const menuButtons = document.querySelectorAll('.menu-card-btn');
+        menuButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Garante que o target seja o valor do atributo data-target
+                const target = button.dataset.target; 
+                if (target) {
+                    handleViewSwitch(target);
+                }
+            });
+        });
+        // *** FIM DA CORREÇÃO DE EXECUÇÃO ***
         
         // --- 3. Lógica do Estado da Reunião (NOVA FUNÇÃO CHAVE) ---
 
