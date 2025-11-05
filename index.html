@@ -219,7 +219,7 @@
                     <p id="quorum-meeting-name" class="text-xl font-bold text-brand-primary">Carregando dados da Reunião...</p>
                 </div>
 
-                <div class="mb-8 bg-brand-light/30 p-6 rounded-xl shadow-lg flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                <div class="mb-8 bg-brand-light/30 p-6 rounded-xl shadow-lg flex flex-col md:flex-row justify-between items-start space-y-4 md:space-y-0 md:items-center">
                     <p class="text-xl font-medium text-gray-700">Início da Reunião: <span id="current-date" class="text-brand-primary font-bold">--</span></p>
                     <p class="text-xl font-medium text-gray-700">Total de Presentes:</p>
                     <span id="total-presentes" class="text-brand-success font-extrabold text-4xl p-2 rounded-lg bg-white shadow-inner">0</span>
@@ -478,12 +478,22 @@
             document.getElementById('main-header').addEventListener('click', () => {
                 switchView('main-cards-view');
             });
-            document.addEventListener('click', (e) => {
-                const card = e.target.closest('.menu-card-btn');
-                if (card) {
-                    handleViewSwitch(card.dataset.target);
-                }
-            });
+            
+            // CORREÇÃO: Anexa o listener de clique diretamente ao container das cartas de menu para maior robustez em diferentes ambientes.
+            const mainCardsContainer = document.querySelector('#main-cards-view .grid');
+
+            if (mainCardsContainer) {
+                mainCardsContainer.addEventListener('click', (e) => {
+                    const card = e.target.closest('.menu-card-btn');
+                    if (card) {
+                        e.preventDefault(); 
+                        handleViewSwitch(card.dataset.target);
+                    }
+                });
+            } else {
+                console.error("Container de cartas de menu não encontrado. A navegação pode falhar.");
+            }
+            // FIM DA CORREÇÃO
         });
         
         // --- 3. Lógica do Estado da Reunião (NOVA FUNÇÃO CHAVE) ---
