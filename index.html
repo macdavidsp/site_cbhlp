@@ -9,53 +9,92 @@
     <!-- Carrega a fonte Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght400;600;700&display=swap" rel="stylesheet">
     
-    <!-- FIX: Carrega Chart.js via tag script padrão para evitar erro de importação de módulo -->
+    <!-- Carrega Chart.js para gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- FIX: Carrega jsPDF via tag script padrão para evitar erro de importação de módulo -->
+    <!-- Carrega jsPDF para geração de PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; }
         /* Estilos customizados para botões e foco */
         .btn-primary {
-            @apply bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-indigo-700 transition duration-300 ease-in-out;
+            @apply bg-indigo-600 text-white font-semibold py-2 px-4 rounded-full shadow-lg hover:bg-indigo-700 transition duration-300 ease-in-out transform hover:scale-105;
         }
-        .btn-secondary {
-            @apply bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-gray-300 transition duration-300 ease-in-out;
+        .nav-btn {
+            @apply flex items-center justify-center space-x-2 p-3 font-semibold rounded-xl transition duration-300 ease-in-out text-gray-700 hover:bg-indigo-50 hover:text-indigo-600;
+        }
+        .nav-btn.active {
+            @apply bg-indigo-600 text-white shadow-xl;
         }
         .input-field {
-            @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150;
+            @apply w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition duration-150 shadow-sm;
         }
         .container-card {
-            @apply p-6 md:p-10 bg-white shadow-xl rounded-xl max-w-4xl w-full mx-auto my-8;
+            @apply p-6 md:p-10 bg-white shadow-2xl rounded-3xl max-w-4xl w-full mx-auto my-8 border border-gray-100;
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-100 min-h-screen">
 
     <div id="app" class="flex flex-col min-h-screen">
-        <!-- Navegação Principal -->
-        <header class="bg-white shadow-lg sticky top-0 z-50">
-            <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
-                <h1 class="text-2xl font-bold text-indigo-600">Registro de Reunião</h1>
-                <div class="flex space-x-2 sm:space-x-4">
-                    <button class="nav-btn btn-secondary" data-target="registro">Registro</button>
-                    <button class="nav-btn btn-secondary" data-target="quorum">Quórum</button>
-                    <button class="nav-btn btn-secondary" data-target="validacao">Validação</button>
-                    <button class="nav-btn btn-secondary" data-target="admin-login">Admin</button>
-                </div>
-            </nav>
-        </header>
+        
+        <!-- Mensagem de Status (Modal/Notificação) -->
+        <div id="status-message" class="fixed top-4 right-4 p-4 rounded-xl shadow-2xl text-white font-medium transition-opacity duration-300 opacity-0 z-50 pointer-events-none" style="min-width: 300px;"></div>
+
+        <!-- 0. Seção de Logo e Título Central (Hero) -->
+        <div class="bg-white py-12 shadow-md mb-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <!-- Imagem do Logo (logo.png) -->
+                <img 
+                    src="logo.png" 
+                    alt="Logo da Reunião" 
+                    class="mx-auto rounded-3xl shadow-lg border-4 border-indigo-200"
+                >
+                <h1 class="mt-4 text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">
+                    <span class="text-indigo-600">Sistema de Quórum</span> Digital
+                </h1>
+                <p class="mt-2 text-xl text-gray-500">
+                    Registro de Frequência e Validação de Presença em Tempo Real.
+                </p>
+            </div>
+        </div>
+
+        <!-- Navegação Principal (Abas) -->
+        <nav class="sticky top-0 z-40 max-w-4xl mx-auto px-4 w-full">
+            <div class="bg-white rounded-3xl shadow-xl p-3 flex justify-between space-x-2 border-b border-indigo-100">
+                
+                <button class="nav-btn active" data-target="registro">
+                    <!-- Ícone UserPlus SVG (Registro) -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-plus"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
+                    <span class="hidden sm:inline">Registro</span>
+                </button>
+
+                <button class="nav-btn" data-target="quorum">
+                    <!-- Ícone PieChart SVG (Quórum) -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pie-chart"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                    <span class="hidden sm:inline">Quórum</span>
+                </button>
+
+                <button class="nav-btn" data-target="validacao">
+                    <!-- Ícone Key SVG (Validação) -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-key-round"><path d="M2 18L5 21L12 14L9 11L2 18Z"/><path d="M15 10L18 7L21 4"/><path d="M12 14L15 11"/><path d="M18 7L21 10"/></svg>
+                    <span class="hidden sm:inline">Validação</span>
+                </button>
+
+                <button class="nav-btn" data-target="admin-login">
+                    <!-- Ícone Lock SVG (Admin/Login) -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-lock"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <span class="hidden sm:inline">Admin</span>
+                </button>
+            </div>
+        </nav>
 
         <main class="flex-grow p-4 sm:p-6 lg:p-8">
 
-            <!-- Mensagem de Status (Modal/Notificação) -->
-            <div id="status-message" class="fixed top-20 right-4 p-4 rounded-lg shadow-lg text-white font-medium transition-opacity duration-300 opacity-0 z-50 pointer-events-none" style="min-width: 300px;"></div>
-
             <!-- 1. Seção de Registro de Frequência (Padrão) -->
             <section id="registro" class="view-section container-card">
-                <h2 class="text-3xl font-bold mb-6 text-gray-800 border-b pb-2">Registro de Frequência</h2>
+                <h2 class="text-3xl font-bold mb-6 text-gray-800 border-b pb-2">Registrar Sua Presença</h2>
                 <form id="registration-form" class="space-y-6">
                     <div>
                         <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
@@ -93,19 +132,19 @@
             <!-- 2. Seção de Quórum (Gráfico) -->
             <section id="quorum" class="view-section container-card hidden">
                 <h2 class="text-3xl font-bold mb-6 text-gray-800 border-b pb-2">Acompanhamento do Quórum</h2>
-                <div class="mb-4">
-                    <p class="text-lg font-medium">Data da Reunião Atual: <span id="current-date" class="text-indigo-600 font-bold">--</span></p>
-                    <p class="text-lg font-medium">Total de Presentes: <span id="total-presentes" class="text-indigo-600 font-bold">0</span></p>
+                <div class="mb-4 bg-indigo-50 p-4 rounded-xl shadow-inner flex justify-between">
+                    <p class="text-lg font-medium">Reunião: <span id="current-date" class="text-indigo-600 font-bold">--</span></p>
+                    <p class="text-lg font-medium">Total de Presentes: <span id="total-presentes" class="text-indigo-600 font-extrabold text-2xl">0</span></p>
                 </div>
                 <div class="grid md:grid-cols-2 gap-8">
                     <!-- Gráfico 1: Setores -->
-                    <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
-                        <h3 class="text-xl font-semibold mb-3 text-gray-700">Presença por Setor</h3>
+                    <div class="bg-gray-50 p-6 rounded-xl shadow-md">
+                        <h3 class="text-xl font-semibold mb-3 text-gray-700 border-b pb-2">Presença por Setor</h3>
                         <canvas id="sectorChart" class="w-full"></canvas>
                     </div>
                     <!-- Gráfico 2: Representação -->
-                    <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
-                        <h3 class="text-xl font-semibold mb-3 text-gray-700">Presença por Representação</h3>
+                    <div class="bg-gray-50 p-6 rounded-xl shadow-md">
+                        <h3 class="text-xl font-semibold mb-3 text-gray-700 border-b pb-2">Presença por Representação</h3>
                         <canvas id="representationChart" class="w-full"></canvas>
                     </div>
                 </div>
@@ -114,39 +153,39 @@
             <!-- 3. Seção de Login Admin -->
             <section id="admin-login" class="view-section container-card hidden max-w-md">
                 <h2 class="text-3xl font-bold mb-6 text-gray-800 border-b pb-2">Acesso de Administrador</h2>
-                <form id="admin-login-form" class="space-y-4">
+                <form id="admin-login-form" class="space-y-6">
                     <div>
                         <label for="admin-password" class="block text-sm font-medium text-gray-700 mb-1">Senha de Administrador</label>
                         <!-- A SENHA DO ADMIN É DEFINIDA NO JAVASCRIPT ABAIXO (ADMIN_PASSWORD) -->
                         <input type="password" id="admin-password" required class="input-field" placeholder="Digite a senha">
                     </div>
                     <button type="submit" class="btn-primary w-full">Entrar</button>
-                    <p class="text-sm text-red-500" id="admin-login-error"></p>
+                    <p class="text-sm text-red-500 mt-2" id="admin-login-error"></p>
                 </form>
             </section>
 
             <!-- 3. Seção de Administração (Dashboard) -->
             <section id="admin-dashboard" class="view-section container-card hidden">
-                <div class="flex justify-between items-center mb-6 border-b pb-2">
-                    <h2 class="text-3xl font-bold text-gray-800">Dashboard de Administração</h2>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b pb-2">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-3 sm:mb-0">Dashboard de Administração</h2>
                     <div class="flex space-x-2">
-                        <button id="download-csv" class="btn-secondary">Download CSV</button>
+                        <button id="download-csv" class="btn-primary">Download CSV</button>
                         <button id="download-pdf" class="btn-primary">Download PDF</button>
                     </div>
                 </div>
 
                 <!-- Tabela de Dados -->
-                <div class="overflow-x-auto bg-gray-50 rounded-lg shadow-inner p-4">
+                <div class="overflow-x-auto bg-gray-50 rounded-xl shadow-inner p-4">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-200">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CPF</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Setor</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rep.</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cód. Validação</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Nome</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">CPF</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Setor</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Rep.</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Cód. Validação</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Data</th>
                             </tr>
                         </thead>
                         <tbody id="admin-table-body" class="bg-white divide-y divide-gray-200">
@@ -167,13 +206,13 @@
                     </div>
                     <button type="submit" class="btn-primary w-full">Validar Presença</button>
                 </form>
-                <div id="validation-result" class="mt-6 p-4 rounded-lg bg-indigo-100 text-indigo-800 font-medium hidden">
+                <div id="validation-result" class="mt-6 p-4 rounded-xl bg-indigo-100 text-indigo-800 font-medium hidden shadow-md">
                     <!-- Resultado da validação será inserido aqui -->
                 </div>
             </section>
 
         </main>
-        <footer class="bg-gray-800 text-white p-4 text-center text-sm">
+        <footer class="bg-gray-800 text-white p-4 text-center text-sm mt-8">
             Sistema de Registro de Frequência | Desenvolvido com Firebase & Tailwind CSS
         </footer>
     </div>
@@ -184,14 +223,23 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, where, getDocs, onSnapshot, runTransaction, doc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        // Carrega as bibliotecas externas necessárias
-        // Chart.js e jsPDF agora são carregados globalmente por tags <script> normais.
-        // REMOVIDO: import { jsPDF } from '...';
+        // Chart.js e jsPDF são carregados globalmente por tags <script> normais.
 
         // --- Configurações e Variáveis Globais (MANDATÓRIO) ---
+        
         // Acesso às variáveis de ambiente do Canvas
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        
+        // CONFIGURAÇÃO DO FIREBASE FORNECIDA PELO USUÁRIO
+        const firebaseConfig = {
+            apiKey: "AIzaSyCqI7tdOwMNwUqnhNyZyPIMqD-sjCFFxPU",
+            authDomain: "cbhlp-assinaturas.firebaseapp.com",
+            projectId: "cbhlp-assinaturas",
+            storageBucket: "cbhlp-assinaturas.firebasestorage.app",
+            messagingSenderId: "817507030657",
+            appId: "1:817507030657:web:c2a7d65850302ba5439f80"
+        };
+        
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         // Senha de Administrador Simples (MUDAR EM PRODUÇÃO!)
@@ -218,12 +266,12 @@
         function showStatusMessage(message, isError = false) {
             const statusEl = document.getElementById('status-message');
             statusEl.textContent = message;
-            statusEl.className = 'fixed top-20 right-4 p-4 rounded-lg shadow-lg font-medium transition-opacity duration-300 z-50';
+            statusEl.className = 'fixed top-4 right-4 p-4 rounded-xl shadow-2xl font-medium transition-opacity duration-300 z-50';
             
             if (isError) {
-                statusEl.classList.add('bg-red-500', 'text-white');
+                statusEl.classList.add('bg-red-600', 'text-white');
             } else {
-                statusEl.classList.add('bg-green-500', 'text-white');
+                statusEl.classList.add('bg-green-600', 'text-white');
             }
             
             statusEl.classList.remove('opacity-0', 'pointer-events-none');
@@ -269,12 +317,10 @@
                 }
             }
             isAuthReady = true;
-            // Inicia o listener do quórum após a autenticação
-            if (document.querySelector('#quorum').classList.contains('hidden') === false) {
+            // Inicia o listener do quórum após a autenticação, se a view inicial for 'quorum' ou 'admin-dashboard'
+            const currentView = Array.from(viewSections).find(v => !v.classList.contains('hidden')).id;
+            if (currentView === 'quorum' || currentView === 'admin-dashboard') {
                 setupQuorumListener();
-            }
-            if (document.querySelector('#admin-dashboard').classList.contains('hidden') === false) {
-                setupAdminListener();
             }
         });
 
@@ -282,11 +328,25 @@
         const viewSections = document.querySelectorAll('.view-section');
         const navBtns = document.querySelectorAll('.nav-btn');
 
+        function updateNavButtons(targetId) {
+            navBtns.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.target === targetId || 
+                   (btn.dataset.target === 'admin-login' && targetId === 'admin-dashboard')) {
+                     btn.classList.add('active');
+                } else if (btn.dataset.target === 'admin-login' && targetId === 'admin-login' && document.getElementById('admin-dashboard').classList.contains('hidden')) {
+                     btn.classList.add('active');
+                }
+            });
+        }
+
         function switchView(targetId) {
             viewSections.forEach(section => {
                 section.classList.add('hidden');
             });
             document.getElementById(targetId).classList.remove('hidden');
+
+            updateNavButtons(targetId);
 
             // Atualiza os listeners dependendo da seção
             if (targetId === 'quorum' && isAuthReady) {
@@ -294,15 +354,6 @@
             } else if (targetId === 'admin-dashboard' && isAuthReady) {
                 setupAdminListener();
             }
-            
-            navBtns.forEach(btn => {
-                btn.classList.remove('bg-indigo-600', 'text-white');
-                btn.classList.add('btn-secondary');
-                if (btn.dataset.target === targetId || (btn.dataset.target === 'admin-login' && targetId === 'admin-dashboard')) {
-                     btn.classList.remove('btn-secondary');
-                     btn.classList.add('bg-indigo-600', 'text-white');
-                }
-            });
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -312,15 +363,17 @@
             // Adiciona listeners aos botões de navegação
             navBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
-                    const targetId = btn.dataset.target;
-                    // Se for o botão Admin, verifica se está logado
-                    if (targetId === 'admin-login' && document.getElementById('admin-dashboard').classList.contains('hidden')) {
-                         switchView('admin-login');
-                    } else if (targetId === 'admin-login' && !document.getElementById('admin-dashboard').classList.contains('hidden')) {
-                         switchView('admin-dashboard');
-                    } else {
-                         switchView(targetId);
+                    let targetId = btn.dataset.target;
+                    
+                    // Lógica para o botão Admin
+                    if (targetId === 'admin-login') {
+                         if (!document.getElementById('admin-dashboard').classList.contains('hidden')) {
+                             targetId = 'admin-dashboard'; // Se já estiver logado, vai direto para o dashboard
+                         } else {
+                             targetId = 'admin-login'; // Caso contrário, vai para o formulário de login
+                         }
                     }
+                    switchView(targetId);
                 });
             });
         });
@@ -484,8 +537,8 @@
             
             const q = query(collection(db, REGISTRATIONS_COLLECTION));
             
-            // Remove o listener anterior se existir (apenas para este escopo, mas onSnapshot retorna uma função de "unsubscribe")
-            // Como este listener é crucial e só é chamado uma vez no início ou ao trocar de tela, não farei o unsubscribe complexo.
+            // onSnapshot retorna uma função de "unsubscribe". Para simplificar o SPA de arquivo único, 
+            // não estamos gerenciando o unsubscribe ativamente, mas o novo onSnapshot substituirá o antigo.
             
             onSnapshot(q, (snapshot) => {
                 registrationsData = [];
@@ -515,7 +568,12 @@
             
             if (password === ADMIN_PASSWORD) {
                 errorEl.textContent = "";
-                switchView('admin-dashboard');
+                // Muda a visualização
+                document.getElementById('admin-login').classList.add('hidden');
+                document.getElementById('admin-dashboard').classList.remove('hidden');
+                // Atualiza o botão de navegação
+                updateNavButtons('admin-dashboard');
+
                 // Se ainda não estiver escutando, inicia o listener
                 if (registrationsData.length === 0) {
                      setupQuorumListener();
@@ -551,7 +609,7 @@
 
             data.forEach(reg => {
                 const row = tableBody.insertRow();
-                row.className = 'hover:bg-gray-50';
+                row.className = 'hover:bg-gray-100 transition duration-150';
                 
                 const dateObj = reg.timestamp.toDate ? reg.timestamp.toDate() : new Date(reg.timestamp);
                 const timeString = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -619,8 +677,7 @@
 
             const today = getTodayDate();
             
-            // CORRIGIDO: Acessa o construtor jsPDF através do objeto global 'jspdf' (minúsculo)
-            // que foi criado pelo script UMD carregado globalmente.
+            // Acessa o construtor jsPDF através do objeto global 'jspdf'
             const doc = new jspdf.jsPDF(); 
             doc.setFontSize(18);
             doc.text(`Relatório de Frequência - ${today}`, 10, 10);
@@ -707,11 +764,11 @@
                 const querySnapshot = await getDocs(q);
 
                 if (querySnapshot.empty) {
-                    resultEl.className = 'mt-6 p-4 rounded-lg bg-red-100 text-red-800 font-medium';
+                    resultEl.className = 'mt-6 p-4 rounded-xl bg-red-100 text-red-800 font-medium shadow-md';
                     resultEl.textContent = `Código não encontrado. Nenhuma presença registrada com o código ${code}.`;
                 } else {
                     const data = querySnapshot.docs[0].data();
-                    resultEl.className = 'mt-6 p-4 rounded-lg bg-green-100 text-green-800 font-medium';
+                    resultEl.className = 'mt-6 p-4 rounded-xl bg-green-100 text-green-800 font-medium shadow-md';
                     resultEl.innerHTML = `
                         <p class="font-bold text-lg">PRESENÇA CONFIRMADA!</p>
                         <p><strong>Nome:</strong> ${data.name}</p>
