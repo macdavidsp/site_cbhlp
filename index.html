@@ -128,8 +128,9 @@
             <section id="main-cards-view" class="view-section container-card">
                 <h2 class="section-title text-brand-primary">Selecione a Ação Desejada</h2>
                 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div id="menu-cards-grid" class="grid grid-cols-2 md:grid-cols-4 gap-6">
                     
+                    <!-- Botões de navegação com data-target -->
                     <button class="menu-card-btn" data-target="registro">
                         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-plus text-brand-primary mb-3"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
                         <span class="text-xl font-semibold text-gray-800">Registro</span>
@@ -446,9 +447,10 @@
                 targetElement.classList.remove('hidden');
             }
             
-            // Certifica-se de que se não for a main-cards-view, ela está escondida
-            if (targetId !== 'main-cards-view') {
-                 document.getElementById('main-cards-view').classList.add('hidden');
+            // Certifica-se de que a visualização principal do menu está escondida se não for ela mesma
+            document.getElementById('main-cards-view').classList.add('hidden');
+            if (targetId === 'main-cards-view') {
+                 document.getElementById('main-cards-view').classList.remove('hidden');
             }
             
             // Atualiza a visualização do Quorum/Admin se necessário (o listener de estado cuida do resto)
@@ -479,20 +481,19 @@
                 switchView('main-cards-view');
             });
             
-            // CORREÇÃO: Anexa o listener de clique diretamente ao container das cartas de menu para maior robustez em diferentes ambientes.
-            const mainCardsContainer = document.querySelector('#main-cards-view .grid');
+            // CORREÇÃO ROBUSTA: Anexa o listener de clique diretamente a CADA botão de menu.
+            const menuButtons = document.querySelectorAll('.menu-card-btn');
 
-            if (mainCardsContainer) {
-                mainCardsContainer.addEventListener('click', (e) => {
-                    const card = e.target.closest('.menu-card-btn');
-                    if (card) {
-                        e.preventDefault(); 
-                        handleViewSwitch(card.dataset.target);
+            menuButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // Garante que o target seja o valor do atributo data-target
+                    const target = button.dataset.target; 
+                    if (target) {
+                        handleViewSwitch(target);
                     }
                 });
-            } else {
-                console.error("Container de cartas de menu não encontrado. A navegação pode falhar.");
-            }
+            });
             // FIM DA CORREÇÃO
         });
         
@@ -610,8 +611,7 @@
                                 where("cpf", "==", cpf), 
                                 where("meetingId", "==", currentMeetingState.meetingId));
 
-                // CORREÇÃO: Faz a verificação de duplicidade ANTES da transação.
-                // A função transaction.get() não pode receber um objeto Query, causando o erro 'path'.
+                // Faz a verificação de duplicidade ANTES da transação.
                 const preCheckSnapshot = await getDocs(q); 
                 if (!preCheckSnapshot.empty) {
                     throw new Error("Duplicidade detectada."); 
@@ -1091,7 +1091,7 @@
                 resultEl.classList.remove('hidden');
             } catch (error) {
                 console.error("Erro na validação do código:", error);
-                showStatusMessage(`Erro ao validar o código: ${error.message || 'Tente novamente.'}`, true);
+                showStatusMessage(`Erro na validação do código: ${error.message || 'Tente novamente.'}`, true);
             }
         });
         
