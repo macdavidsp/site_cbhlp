@@ -1,86 +1,55 @@
-Sistema de Gestão de Quórum e Frequência
+# Sistema de Gestão On-line de Reuniões
 
-🎯 Objetivo do Projeto
+Este sistema é uma aplicação web de página única (Single-Page Application - SPA) desenvolvida para gerenciar e acompanhar o registro de frequência e quórum de participantes em reuniões.
 
-Este projeto é uma solução web desenvolvida para gerenciar em tempo real a presença (frequência) e o quórum de reuniões, assembleias, ou eventos que exigem um controle rigoroso de participação. Ele oferece uma interface de registro simples para o participante e um dashboard administrativo poderoso para o controle da sessão e exportação de dados.
+A aplicação utiliza uma arquitetura moderna e ferramentas em tempo real para fornecer uma visão clara da participação.
 
-💻 Tecnologias Utilizadas
+## 1. Visão Geral e Tecnologias
 
-Frontend: HTML5, JavaScript (Módulos ES6), Tailwind CSS (para estilização responsiva e moderna).
+| Característica | Detalhes |
+| :--- | :--- |
+| **Nome** | Sistema de Gestão On-line de Reuniões: Registro de Frequência e Quórum |
+| **Frontend** | HTML5, JavaScript (Módulo), **Tailwind CSS** (para estilização) |
+| **Backend/Dados** | **Firebase** (Google Cloud) |
+| **Serviços Firebase** | Firestore (Banco de Dados em Tempo Real), Authentication |
+| **Bibliotecas Adicionais** | **Chart.js** (para gráficos de quórum), **jsPDF** e **jspdf-autotable** (para exportação de PDF) |
 
-Backend & Database: Google Firebase / Firestore (utilizado para armazenamento de dados em tempo real e controle transacional).
+## 2. Funcionalidades Principais
 
-Bibliotecas: Chart.js (para visualização do Quórum) e jsPDF/autotable (para exportação de PDF).
+O sistema apresenta um Menu Principal com quatro módulos distintos:
 
+### 2.1. Registro de Presença (Marcar Presença)
 
-✨ Funcionalidades Principais
+Este módulo permite que os participantes registrem sua presença na reunião do dia.
 
-O sistema é dividido em quatro áreas principais de acesso a partir do menu inicial:
+* **Coleta de Dados:** O formulário exige informações como Nome Completo, CPF (apenas 11 dígitos numéricos), Instituição/Órgão, Setor (Usuário, Poder Público ou Sociedade Civil) e Representação (Titular ou Suplente).
+* **Validação:** O sistema realiza uma verificação para evitar duplicidade de registro de CPF na mesma reunião.
+* **Código de Validação:** Após o registro bem-sucedido, é gerado e exibido um código de validação exclusivo para o participante.
+* **Transação Segura:** O registro é feito utilizando uma transação no Firestore para garantir a integridade e a verificação de duplicidade.
 
-1. Registro (Presença)
+### 2.2. Acompanhamento do Quórum (Ver Status)
 
-Formulário Simples: Coleta Nome, CPF, Instituição, Setor e Representação.
+Este painel fornece uma visão em tempo real da participação na reunião.
 
-Anti-Duplicidade: O sistema impede que o mesmo CPF seja registrado mais de uma vez na mesma reunião, garantindo a integridade dos dados.
+* **Tempo Real:** Utiliza o listener `onSnapshot` do Firebase Firestore para atualizar os dados automaticamente sempre que um novo registro é feito.
+* **Indicadores:** Exibe o total de presentes e a data da reunião em vigor.
+* **Gráficos:** Apresenta dois gráficos de pizza (Chart.js) para visualização rápida da distribuição dos participantes:
+    * Distribuição por **Setor** (Usuário, Poder Público, Sociedade Civil).
+    * Distribuição por **Representação** (Titular, Suplente).
 
-Código de Validação: A cada registro bem-sucedido, um código de 6 dígitos é gerado e exibido para que o participante possa comprovar sua presença posteriormente.
+### 2.3. Verificação de Validação (Verificar Código)
 
-Controle de Estado: O registro só é permitido se o administrador tiver iniciado a reunião (estado "ABERTA").
+Permite a terceiros ou ao próprio usuário verificar a autenticidade de um registro.
 
+* **Consulta:** O usuário insere o Código de Validação de 6 dígitos.
+* **Resultado:** Em caso de código válido, exibe os detalhes do registro: Nome, Instituição, Setor, Data da Reunião e o carimbo de data/hora do registro.
 
-2. Quórum
+### 2.4. Acesso de Administrador (Acesso Restrito)
 
-Visualização em Tempo Real: Exibe o número total de participantes presentes.
+Esta área permite o gerenciamento e a exportação dos dados de frequência.
 
-Gráficos de Distribuição: Apresenta gráficos de pizza e rosca mostrando a distribuição dos participantes por Setor e por Representação (Titular/Suplente).
-
-
-3. Validação
-
-Permite que qualquer pessoa insira o Código de Validação único (fornecido no registro) para verificar a autenticidade e os detalhes do registro (Nome, Instituição, Reunião).
-
-
-4. Dashboard de Administração (Acesso Restrito)
-
-Controle de Reunião: Botões dedicados para INICIAR NOVA REUNIÃO (abrindo o registro) e FINALIZAR REUNIÃO (fechando o registro).
-
-Registros Detalhados: Tabela completa e em tempo real de todos os participantes da reunião atual.
-
-Exportação de Dados:
-
-Download CSV: Exporta todos os dados brutos para planilhas.
-
-Download PDF: Gera um relatório formatado e pronto para impressão da lista de frequência.
-
-
- Configuração e Administração
-
-1. Senha de Administrador
-
-O acesso à área administrativa está protegido por uma senha, definida no código-fonte:
-
-
-
-2. Estrutura de Dados (Firebase Firestore)
-
-O sistema utiliza duas coleções públicas principais, garantindo que os dados sejam centralizados para o aplicativo em execução:
-
-Coleção
-
-Propósito
-
-Caminho de Exemplo
-
-Registros
-
-Armazena todos os dados de frequência.
-
-artifacts/<appId>/public/data/meeting_registrations
-
-Estado da Reunião
-
-Documento único que armazena o status atual (isActive, meetingId, meetingName).
-
-artifacts/<appId>/public/data/meeting_state/current_meeting
-
-Para iniciar, acesse o menu Admin, insira a senha padrão e clique em INICIAR NOVA REUNIÃO.
+* **Login:** Acesso protegido por uma senha de administrador simples (`minhasenhasecreta123` no código atual).
+* **Dashboard:** Uma vez logado, o administrador visualiza uma tabela detalhada (Admin Dashboard) com todos os registros, incluindo Nome, CPF, Setor, Representação e o Código de Validação.
+* **Exportação de Dados:** O administrador pode baixar os dados completos da reunião em dois formatos:
+    * **CSV:** Para manipulação em planilhas eletrônicas.
+    * **PDF:** Gera um documento formatado com cabeçalho, tabela detalhada e link de validação, utilizando as bibliotecas jsPDF e jspdf-autotable.

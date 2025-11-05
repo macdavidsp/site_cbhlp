@@ -28,6 +28,7 @@
                         'brand-neutral': '#67686a', // Medium Grey
                         'brand-success': '#50c2ab', // Seafoam Green
                         'brand-light': '#7fb2c7',  // Soft Blue
+                        'brand-danger': '#dc2626', // Red for actions like reset
                     },
                 },
             },
@@ -44,6 +45,10 @@
             @apply w-full flex items-center justify-center space-x-3 text-lg; 
             /* Enhanced Design: Gradient, strong shadow, larger text */
             @apply bg-gradient-to-r from-brand-primary to-brand-success text-white font-extrabold py-4 px-6 rounded-xl shadow-xl hover:shadow-2xl hover:from-brand-primary/90 hover:to-brand-success/90 transition duration-300 ease-in-out transform hover:scale-[1.01];
+        }
+
+        .btn-danger {
+            @apply bg-brand-danger text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-red-700 transition duration-150;
         }
         
         /* --- ESTILO DE INPUT APRIMORADO COM BORDAS MAIS CLARAS E DISCRETAS --- */
@@ -116,9 +121,14 @@
             <section id="main-cards-view" class="view-section container-card">
                 <h2 class="section-title text-brand-primary">Selecione a Ação Desejada</h2>
                 
+                <!-- NOVO: Indicador de status da reunião -->
+                <div id="meeting-status-indicator" class="text-center mb-6 p-3 rounded-lg shadow-inner font-semibold text-lg">
+                    <!-- Mensagem dinâmica inserida via JS -->
+                </div>
+                
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                     
-                    <button class="menu-card-btn" data-target="registro">
+                    <button class="menu-card-btn" data-target="registro" id="btn-registro">
                         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-plus text-brand-primary mb-3"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
                         <span class="text-xl font-semibold text-gray-800">Registro</span>
                         <span class="text-sm text-brand-neutral">Marcar Presença</span>
@@ -148,6 +158,10 @@
             <section id="registro" class="view-section container-card hidden">
                 <h2 class="section-title text-brand-accent">Seus Dados de Presença</h2>
                 
+                <div id="registro-alert" class="p-4 mb-4 rounded-lg text-center font-medium bg-red-100 text-red-700 hidden">
+                    <p>O registro de presença está fechado. Por favor, aguarde o Administrador iniciar a reunião.</p>
+                </div>
+
                 <!-- ATUALIZADO: Fundo do formulário agora usa bg-brand-light/30 e shadow-lg -->
                 <form id="registration-form" class="space-y-6 p-6 bg-brand-light/30 rounded-2xl shadow-lg">
                     
@@ -188,7 +202,7 @@
                     </div>
                     
                     <div class="pt-4">
-                        <button type="submit" class="btn-primary w-full">
+                        <button type="submit" class="btn-primary w-full" id="btn-submit-registro">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M9 11l3 3L22 4"/></svg>
                             <span>Confirmar e Registrar Presença</span>
                         </button>
@@ -247,8 +261,29 @@
                     </div>
                 </div>
 
+                <!-- NOVO: CONTROLES DE ADMINISTRAÇÃO DA REUNIÃO -->
+                <div class="bg-gray-100 p-6 rounded-xl shadow-inner mb-8 border border-gray-200">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Controle da Reunião</h3>
+                    
+                    <div class="mb-4 p-3 rounded-lg text-center font-semibold text-lg" id="admin-meeting-status">
+                        <!-- Status atual da reunião -->
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <button id="start-meeting" class="bg-brand-success text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-green-700 transition duration-150">INICIAR NOVA REUNIÃO</button>
+                        <button id="end-meeting" class="bg-brand-neutral text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-gray-700 transition duration-150">FINALIZAR REUNIÃO</button>
+                        
+                        <!-- NOVO BOTÃO: RESETAR QUÓRUM DE HOJE -->
+                        <button id="reset-quorum-today" class="btn-danger py-3 px-4">RESETAR QUÓRUM DE HOJE</button>
+                    </div>
+                    <p class="mt-4 text-sm text-gray-500">
+                        O botão "Resetar Quórum de Hoje" **apaga** todos os registros de presença da reunião que está ativa no momento.
+                    </p>
+                </div>
+                
                 <!-- ATUALIZADO: Fundo da tabela agora usa bg-brand-light/30 e shadow-lg -->
                 <div class="overflow-x-auto bg-brand-light/30 rounded-xl shadow-lg p-4 border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3">Tabela de Presenças da Reunião Ativa (<span id="admin-meeting-date">--</span>)</h3>
                     <table class="min-w-full divide-y divide-gray-200 admin-table">
                         <thead class="bg-gray-200">
                             <tr>
@@ -289,6 +324,18 @@
                     <!-- Resultado da validação aparece aqui -->
                 </div>
             </section>
+            
+            <!-- NOVO: Modal de Confirmação (Substitui alert/confirm) -->
+            <div id="confirmation-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[100] hidden" role="dialog" aria-modal="true">
+                <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full mx-4 transform transition-all duration-300 scale-95 opacity-0" id="modal-content">
+                    <h3 class="text-xl font-bold mb-4 text-brand-danger border-b pb-2">Confirmação Necessária</h3>
+                    <p class="mb-6 text-gray-700" id="modal-text">Você tem certeza que deseja executar esta ação?</p>
+                    <div class="flex justify-end space-x-3">
+                        <button id="modal-cancel" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">Cancelar</button>
+                        <button id="modal-confirm" class="px-4 py-2 bg-brand-danger text-white rounded-lg hover:bg-red-700 transition">Confirmar</button>
+                    </div>
+                </div>
+            </div>
 
         </main>
         
@@ -303,7 +350,8 @@
         // Importações do Firebase (Protocolo HTTPS corrigido)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs, onSnapshot, runTransaction, doc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // ATUALIZADO: Adicionado deleteDoc e getDoc
+        import { getFirestore, collection, addDoc, query, where, getDocs, onSnapshot, runTransaction, doc, setDoc, deleteDoc, getDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         // --- Configurações e Variáveis Globais (MANDATÓRIO) ---
         
@@ -338,8 +386,18 @@
         let isAuthReady = false;
         let registrationsData = []; // Cache dos dados de registro
 
+        // NOVO: Estado da reunião (global)
+        let meetingState = {
+            isActive: false,
+            meetingId: null, // Será a data da reunião em YYYY-MM-DD
+            meetingName: "Nenhuma Reunião Ativa" 
+        };
+
         // Referência à coleção pública de registros
         const REGISTRATIONS_COLLECTION = `artifacts/${appId}/public/data/meeting_registrations`;
+        
+        // NOVO: Referência ao documento de estado da reunião
+        const MEETING_STATE_DOC_PATH = `artifacts/${appId}/public/data/meeting_state/current_meeting`;
 
         // --- Funções de Utilitário ---
 
@@ -378,6 +436,65 @@
             return `${year}-${month}-${day}`;
         }
         
+        // Formata a data de YYYY-MM-DD para DD/MM/YYYY
+        function formatDateToBR(dateString) {
+            if (!dateString) return '--/--/----';
+            const parts = dateString.split('-'); // Espera YYYY-MM-DD
+            if (parts.length === 3) {
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            return dateString; // Retorna original se não estiver no formato esperado
+        }
+        
+        // --- Modal de Confirmação (Substitui confirm()) ---
+        function openConfirmationModal(message, confirmAction) {
+            const modal = document.getElementById('confirmation-modal');
+            const modalContent = document.getElementById('modal-content');
+            document.getElementById('modal-text').textContent = message;
+
+            // Transição de entrada
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+
+            return new Promise((resolve) => {
+                const onConfirm = () => {
+                    closeModal();
+                    resolve(true);
+                };
+                const onCancel = () => {
+                    closeModal();
+                    resolve(false);
+                };
+
+                const confirmButton = document.getElementById('modal-confirm');
+                const cancelButton = document.getElementById('modal-cancel');
+                
+                // Remove listeners antigos para evitar duplicação
+                confirmButton.onclick = null;
+                cancelButton.onclick = null;
+                
+                // Adiciona novos listeners
+                confirmButton.onclick = onConfirm;
+                cancelButton.onclick = onCancel;
+            });
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('confirmation-modal');
+            const modalContent = document.getElementById('modal-content');
+            
+            // Transição de saída
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300); // Deve corresponder à duração da transição CSS
+        }
+        
         // --- 1. Lógica de Autenticação (Setup Inicial) ---
 
         onAuthStateChanged(auth, async (user) => {
@@ -398,11 +515,9 @@
                 }
             }
             isAuthReady = true;
-            // Inicia o listener do quórum se a view inicial for quorum ou admin-dashboard
-            const currentView = Array.from(viewSections).find(v => !v.classList.contains('hidden'))?.id;
-            if (currentView === 'quorum' || currentView === 'admin-dashboard') {
-                setupQuorumListener();
-            }
+            
+            // Inicia o listener de estado e quórum
+            setupMeetingStateListener(); 
         });
 
         // --- 2. Controle de Navegação (SPA) ---
@@ -420,9 +535,11 @@
 
             // Atualiza os listeners dependendo da seção
             if (targetId === 'quorum' && isAuthReady) {
-                setupQuorumListener();
+                // O listener do quórum é iniciado pelo listener do estado da reunião, 
+                // mas garantimos a atualização do gráfico aqui
+                updateQuorumCharts(registrationsData); 
             } else if (targetId === 'admin-dashboard' && isAuthReady) {
-                setupAdminListener();
+                setupAdminDashboard(); // Atualiza o dashboard
             }
             
             // Certifica-se de que se não for a main-cards-view, ela está escondida
@@ -437,7 +554,8 @@
             
             // Lógica para o botão Admin
             if (requestedTarget === 'admin-login') {
-                 if (!document.getElementById('admin-dashboard').classList.contains('hidden')) {
+                 // Verifica se o dashboard admin foi carregado e não está escondido
+                 if (document.getElementById('admin-dashboard') && !document.getElementById('admin-dashboard').classList.contains('hidden')) {
                      targetId = 'admin-dashboard'; // Se já estiver logado, vai direto para o dashboard
                  } else {
                      targetId = 'admin-login'; // Caso contrário, vai para o formulário de login
@@ -464,7 +582,78 @@
             });
         });
         
-        // --- 3. Lógica do Formulário de Registro (1ª Função) ---
+        // --- 3. Gestão do Estado da Reunião (NOVO) ---
+        
+        /**
+         * Atualiza o estado da UI baseado no estado da reunião atual.
+         */
+        function updateUIOnMeetingStateChange() {
+            // Indicador no Menu Principal
+            const indicatorEl = document.getElementById('meeting-status-indicator');
+            const registroBtn = document.getElementById('btn-registro');
+            const registroAlert = document.getElementById('registro-alert');
+            const registroForm = document.getElementById('registration-form');
+
+            if (meetingState.isActive) {
+                indicatorEl.className = 'text-center mb-6 p-3 rounded-lg shadow-inner font-semibold text-lg bg-brand-success/20 text-brand-primary';
+                indicatorEl.innerHTML = `✅ REUNIÃO ATIVA: <span class="font-extrabold">${meetingState.meetingName || 'Sem Nome'}</span> - Data: ${formatDateToBR(meetingState.meetingId)}`;
+                
+                registroBtn.disabled = false;
+                registroBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                registroAlert.classList.add('hidden');
+                if (registroForm) registroForm.style.pointerEvents = 'auto';
+
+                // Atualiza a data do Quórum
+                document.getElementById('current-date').textContent = formatDateToBR(meetingState.meetingId);
+
+            } else {
+                indicatorEl.className = 'text-center mb-6 p-3 rounded-lg shadow-inner font-semibold text-lg bg-red-100 text-red-700';
+                indicatorEl.innerHTML = `❌ REUNIÃO FECHADA.`;
+
+                registroBtn.disabled = true;
+                registroBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                registroAlert.classList.remove('hidden');
+                if (registroForm) registroForm.style.pointerEvents = 'none';
+
+                // Se não há reunião ativa, exibe a data de hoje para referência
+                document.getElementById('current-date').textContent = formatDateToBR(getTodayDate()) + ' (Fechada)';
+            }
+            
+            // Se estiver no admin dashboard, atualiza os controles lá também
+            if (!document.getElementById('admin-dashboard').classList.contains('hidden')) {
+                setupAdminDashboard();
+            }
+        }
+
+        /**
+         * Listener em tempo real para o estado da reunião.
+         */
+        function setupMeetingStateListener() {
+            if (!isAuthReady) return;
+            
+            const docRef = doc(db, MEETING_STATE_DOC_PATH);
+
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    meetingState = docSnap.data();
+                    console.log("Estado da Reunião Atualizado:", meetingState);
+                } else {
+                    // Se o documento não existir, define como estado padrão (fechado)
+                    meetingState = { isActive: false, meetingId: null, meetingName: "Nenhuma Reunião Ativa" };
+                    console.log("Documento de estado não existe. Reunião definida como fechada.");
+                }
+
+                // Dispara o listener de registros com a nova data da reunião
+                setupQuorumListener(meetingState.meetingId);
+                updateUIOnMeetingStateChange();
+
+            }, (error) => {
+                console.error("Erro ao ouvir o estado da reunião:", error);
+                showStatusMessage("Erro ao carregar estado da reunião.", true);
+            });
+        }
+        
+        // --- 4. Lógica do Formulário de Registro (1ª Função) ---
         
         document.getElementById('registration-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -473,26 +662,34 @@
                 showStatusMessage("Aguarde a inicialização do sistema...", true);
                 return;
             }
+            
+            // VERIFICA SE A REUNIÃO ESTÁ ATIVA
+            if (!meetingState.isActive) {
+                 showStatusMessage("O registro de presença está fechado pelo Administrador.", true);
+                 return;
+            }
 
             const name = document.getElementById('name').value.trim();
             const cpf = document.getElementById('cpf').value.trim();
             const institution = document.getElementById('institution').value.trim();
             const sector = document.getElementById('sector').value;
             const representation = document.getElementById('representation').value;
-            const todayDate = getTodayDate();
+            
+            // Usa a data da reunião ativa, não a data de hoje (para reuniões retroativas/agendadas)
+            const meetingDate = meetingState.meetingId; 
             
             const validationCode = generateValidationCode();
             
             try {
-                // 1. Verificar Duplicidade (CPF no mesmo dia)
+                // 1. Verificar Duplicidade (CPF na reunião ATIVA)
                 const q = query(collection(db, REGISTRATIONS_COLLECTION), 
                                 where("cpf", "==", cpf), 
-                                where("date", "==", todayDate));
+                                where("date", "==", meetingDate));
                 
                 const querySnapshot = await getDocs(q);
                 
                 if (!querySnapshot.empty) {
-                    showStatusMessage(`Seu CPF já está registrado para a reunião de hoje (${todayDate}).`, true);
+                    showStatusMessage(`Seu CPF já está registrado para a reunião de ${formatDateToBR(meetingDate)}.`, true);
                     return;
                 }
                 
@@ -510,7 +707,7 @@
                         institution,
                         sector,
                         representation,
-                        date: todayDate,
+                        date: meetingDate, // Usa a data da reunião ativa
                         validationCode,
                         timestamp: new Date()
                     };
@@ -528,7 +725,7 @@
 
             } catch (error) {
                 if (error === "Duplicidade detectada por transação.") {
-                    showStatusMessage(`Duplicidade: Seu CPF já foi registrado para a reunião de hoje.`, true);
+                    showStatusMessage(`Duplicidade: Seu CPF já foi registrado para a reunião ativa.`, true);
                 } else {
                     console.error("Erro ao registrar a frequência:", error);
                     showStatusMessage(`Erro ao registrar: ${error.message || 'Tente novamente.'}`, true);
@@ -536,20 +733,22 @@
             }
         });
 
-        // --- 4. Lógica do Gráfico de Quórum (2ª Função) ---
+        // --- 5. Lógica do Gráfico de Quórum (2ª Função) ---
         
         let sectorChart = null;
         let representationChart = null;
+        // Variável para armazenar a função de unsubscribe do onSnapshot
+        let unsubscribeQuorum = null; 
         
         // Cores do gráfico baseadas na nova paleta
         const chartColors = ['#176781', '#eac066', '#50c2ab', '#7fb2c7', '#67686a'];
 
         function updateQuorumCharts(data) {
-            const today = getTodayDate();
-            document.getElementById('current-date').textContent = today;
+            const meetingDate = meetingState.meetingId || getTodayDate(); // Usa data da reunião ou a de hoje se não houver
+            document.getElementById('current-date').textContent = meetingState.isActive ? formatDateToBR(meetingDate) : formatDateToBR(meetingDate) + ' (Fechada)';
             
-            // Filtra os dados apenas para a reunião de hoje
-            const todayData = data.filter(r => r.date === today);
+            // Filtra os dados apenas para a reunião ATIVA
+            const todayData = data.filter(r => r.date === meetingState.meetingId);
             
             document.getElementById('total-presentes').textContent = todayData.length;
 
@@ -620,36 +819,50 @@
             });
         }
         
-        // Listener em Tempo Real (onSnapshot) para Quórum
-        function setupQuorumListener() {
+        /**
+         * Listener em Tempo Real (onSnapshot) para Quórum, filtrado pela reunião ativa.
+         */
+        function setupQuorumListener(meetingDateId) {
             if (!isAuthReady) return;
+
+            // Cancela o listener anterior, se houver
+            if (unsubscribeQuorum) {
+                unsubscribeQuorum();
+            }
             
-            const q = query(collection(db, REGISTRATIONS_COLLECTION));
-            
-            // onSnapshot retorna uma função de "unsubscribe". Para simplificar o SPA de arquivo único, 
-            // não estamos gerenciando o unsubscribe ativamente, mas o novo onSnapshot substituirá o antigo.
-            
-            onSnapshot(q, (snapshot) => {
-                registrationsData = [];
-                snapshot.forEach((doc) => {
-                    registrationsData.push({ id: doc.id, ...doc.data() });
+            if (meetingDateId) {
+                 // Filtra os registros para a reunião ativa (meetingId)
+                 const q = query(collection(db, REGISTRATIONS_COLLECTION),
+                                 where("date", "==", meetingDateId));
+                                 
+                 unsubscribeQuorum = onSnapshot(q, (snapshot) => {
+                    registrationsData = [];
+                    snapshot.forEach((doc) => {
+                        registrationsData.push({ id: doc.id, ...doc.data() });
+                    });
+                    console.log(`Dados de registro atualizados (onSnapshot) para a reunião ${meetingDateId}. Total: ${registrationsData.length}`);
+                    updateQuorumCharts(registrationsData);
+                    
+                    // Se o admin estiver logado, atualiza a tabela também
+                    if (!document.getElementById('admin-dashboard').classList.contains('hidden')) {
+                        renderAdminTable(registrationsData);
+                    }
+                }, (error) => {
+                    console.error("Erro ao ouvir atualizações do Quórum:", error);
+                    showStatusMessage("Erro ao carregar dados do quórum.", true);
                 });
-                console.log("Dados de registro atualizados (onSnapshot).");
+            } else {
+                // Se não houver meetingDateId, limpa os dados
+                registrationsData = [];
+                console.log("Nenhuma reunião ativa. Dados de registro limpos.");
                 updateQuorumCharts(registrationsData);
-                // Se o admin estiver logado, atualiza a tabela também
-                if (!document.getElementById('admin-dashboard').classList.contains('hidden')) {
-                    renderAdminTable(registrationsData);
-                }
-            }, (error) => {
-                console.error("Erro ao ouvir atualizações do Quórum:", error);
-                showStatusMessage("Erro ao carregar dados do quórum.", true);
-            });
+            }
         }
 
 
-        // --- 5. Lógica da Área Administrativa (3ª Função) ---
+        // --- 6. Lógica da Área Administrativa (3ª Função) ---
 
-        // 5.1 Login
+        // 6.1 Login
         document.getElementById('admin-login-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const password = document.getElementById('admin-password').value;
@@ -661,40 +874,160 @@
                 document.getElementById('admin-login').classList.add('hidden');
                 document.getElementById('admin-dashboard').classList.remove('hidden');
                 
-                // Se ainda não estiver escutando, inicia o listener
-                if (registrationsData.length === 0) {
-                     setupQuorumListener();
-                } else {
-                     renderAdminTable(registrationsData);
-                }
+                // Configura o dashboard
+                setupAdminDashboard();
+                
             } else {
                 errorEl.textContent = "Senha incorreta. Tente novamente.";
                 showStatusMessage("Senha de Admin incorreta.", true);
             }
         });
 
-        // 5.2 Renderização da Tabela
+        // 6.2 Setup do Dashboard Admin
+        function setupAdminDashboard() {
+            const statusEl = document.getElementById('admin-meeting-status');
+            const startBtn = document.getElementById('start-meeting');
+            const endBtn = document.getElementById('end-meeting');
+            const resetBtn = document.getElementById('reset-quorum-today');
+            const adminDateEl = document.getElementById('admin-meeting-date');
+            
+            adminDateEl.textContent = formatDateToBR(meetingState.meetingId) || '--';
+
+            if (meetingState.isActive) {
+                statusEl.className = 'mb-4 p-3 rounded-lg text-center font-semibold text-lg bg-brand-success/20 text-brand-primary';
+                statusEl.innerHTML = `✅ REUNIÃO EM CURSO: ${meetingState.meetingName} (Data: ${formatDateToBR(meetingState.meetingId)})`;
+                startBtn.disabled = true;
+                startBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                endBtn.disabled = false;
+                endBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                resetBtn.disabled = false;
+                resetBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                statusEl.className = 'mb-4 p-3 rounded-lg text-center font-semibold text-lg bg-red-100 text-red-700';
+                statusEl.innerHTML = `❌ REUNIÃO FECHADA.`;
+                startBtn.disabled = false;
+                startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                endBtn.disabled = true;
+                endBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                resetBtn.disabled = true;
+                resetBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+            
+            // Reusa os dados do listener do quórum que está ativo
+            renderAdminTable(registrationsData);
+        }
+
+        // 6.3 Lógica dos Botões de Controle (Iniciar/Finalizar/Resetar)
+        
+        // Ações: Iniciar Reunião
+        document.getElementById('start-meeting').addEventListener('click', async () => {
+            const today = getTodayDate();
+            // Pede um nome para a reunião (poderia ser um prompt mais elaborado)
+            const meetingName = prompt("Digite o NOME da nova reunião (ex: Reunião Ordinária 2025):") || `Reunião ${formatDateToBR(today)}`;
+
+            if (meetingName) {
+                try {
+                    await setDoc(doc(db, MEETING_STATE_DOC_PATH), {
+                        isActive: true,
+                        meetingId: today, // Usa a data de hoje como ID da reunião (YYYY-MM-DD)
+                        meetingName: meetingName
+                    });
+                    showStatusMessage(`Nova reunião (${meetingName}) iniciada com sucesso na data ${formatDateToBR(today)}!`);
+                } catch (error) {
+                    console.error("Erro ao iniciar a reunião:", error);
+                    showStatusMessage("Erro ao iniciar a reunião.", true);
+                }
+            } else {
+                 showStatusMessage("O nome da reunião não pode ser vazio.", true);
+            }
+        });
+
+        // Ações: Finalizar Reunião
+        document.getElementById('end-meeting').addEventListener('click', async () => {
+            try {
+                await setDoc(doc(db, MEETING_STATE_DOC_PATH), {
+                    isActive: false,
+                    meetingId: meetingState.meetingId, // Mantém a referência, mas desativa
+                    meetingName: meetingState.meetingName
+                });
+                showStatusMessage(`Reunião ${meetingState.meetingName} finalizada.`);
+            } catch (error) {
+                console.error("Erro ao finalizar a reunião:", error);
+                showStatusMessage("Erro ao finalizar a reunião.", true);
+            }
+        });
+        
+        // NOVO: Ações: Resetar Quórum de Hoje
+        document.getElementById('reset-quorum-today').addEventListener('click', async () => {
+            if (!meetingState.isActive || !meetingState.meetingId) {
+                showStatusMessage("Não há reunião ativa para resetar o quórum.", true);
+                return;
+            }
+            
+            const confirmed = await openConfirmationModal(
+                `CONFIRMAR: Você tem certeza que deseja APAGAR TODOS os ${registrationsData.length} registros da reunião ativa (${formatDateToBR(meetingState.meetingId)})? Esta ação é irreversível.`, 
+                () => deleteMeetingRecords(meetingState.meetingId)
+            );
+            
+            if (confirmed) {
+                await deleteMeetingRecords(meetingState.meetingId);
+            } else {
+                showStatusMessage("Operação de reset cancelada.", false);
+            }
+        });
+        
+        /**
+         * Executa a exclusão de todos os registros de uma reunião específica.
+         * @param {string} meetingDateId O ID (data) da reunião a ser apagada.
+         */
+        async function deleteMeetingRecords(meetingDateId) {
+            try {
+                const q = query(collection(db, REGISTRATIONS_COLLECTION), 
+                                where("date", "==", meetingDateId));
+                                
+                const snapshot = await getDocs(q);
+                
+                let deletedCount = 0;
+                
+                // Deletar em lote (importante para evitar timeouts longos)
+                for (const docSnapshot of snapshot.docs) {
+                    await deleteDoc(doc(db, REGISTRATIONS_COLLECTION, docSnapshot.id));
+                    deletedCount++;
+                }
+
+                showStatusMessage(`Sucesso! ${deletedCount} registros da reunião ${formatDateToBR(meetingDateId)} foram apagados.`, false);
+                
+            } catch (error) {
+                console.error("Erro ao apagar registros:", error);
+                showStatusMessage(`Erro ao resetar quórum: ${error.message || 'Tente novamente.'}`, true);
+            }
+        }
+        
+
+        // 6.4 Renderização da Tabela
         function renderAdminTable(data) {
             const tableBody = document.getElementById('admin-table-body');
             const loadingMsg = document.getElementById('admin-loading-message');
             tableBody.innerHTML = '';
             
-            if (data.length === 0) {
-                loadingMsg.textContent = "Nenhum registro encontrado.";
+            // Filtra os dados apenas para a reunião ATIVA (isso é a chave)
+            const filteredData = data.filter(reg => reg.date === meetingState.meetingId);
+            
+            if (filteredData.length === 0) {
+                loadingMsg.textContent = meetingState.isActive ? "Nenhum registro encontrado para esta reunião." : "Aguardando o início de uma nova reunião.";
                 loadingMsg.classList.remove('hidden');
                 return;
             }
             loadingMsg.classList.add('hidden');
 
             // Ordena por data/hora mais recente primeiro
-            // Nota: O timestamp pode vir como um objeto Timestamp do Firebase ou como um objeto Date/string
-            data.sort((a, b) => {
+            filteredData.sort((a, b) => {
                 const dateA = a.timestamp.toDate ? a.timestamp.toDate() : new Date(a.timestamp);
                 const dateB = b.timestamp.toDate ? b.timestamp.toDate() : new Date(b.timestamp);
                 return dateB - dateA;
             });
 
-            data.forEach(reg => {
+            filteredData.forEach(reg => {
                 const row = tableBody.insertRow();
                 row.className = 'hover:bg-gray-100 transition duration-150';
                 
@@ -707,37 +1040,29 @@
                 row.insertCell().textContent = reg.sector;
                 row.insertCell().textContent = reg.representation;
                 row.insertCell().textContent = reg.validationCode;
-                row.insertCell().textContent = `${reg.date} (${timeString})`;
+                row.insertCell().textContent = `${formatDateToBR(reg.date)} (${timeString})`;
             });
         }
         
-        function setupAdminListener() {
-            // Reusa o listener do Quórum (setupQuorumListener) pois ele já carrega os dados em tempo real para 'registrationsData'
-            // A função setupQuorumListener() será responsável por chamar renderAdminTable quando os dados mudarem.
-            if (registrationsData.length === 0) {
-                // Se não tiver dados, o listener deve ser iniciado
-                setupQuorumListener();
-            } else {
-                // Se já tiver dados, apenas renderiza
-                renderAdminTable(registrationsData);
-            }
-        }
-
-        // 5.3 Download CSV
+        // 6.5 Download CSV (Filtrado pela Reunião Ativa)
         document.getElementById('download-csv').addEventListener('click', () => {
-            if (registrationsData.length === 0) {
-                showStatusMessage("Nenhum dado para exportar.", true);
+             // Garante que só exporta os dados da reunião ativa
+            const dataToExport = registrationsData.filter(reg => reg.date === meetingState.meetingId);
+            
+            if (dataToExport.length === 0) {
+                showStatusMessage("Nenhum dado para exportar na reunião ativa.", true);
                 return;
             }
 
-            const today = getTodayDate();
+            const meetingDate = meetingState.meetingId || getTodayDate(); // Usa a data da reunião ativa
             
             let csv = "ID,Nome,CPF,Instituicao,Setor,Representacao,Codigo_Validacao,Data_Reuniao,Timestamp\n";
             
-            registrationsData.forEach(reg => {
+            dataToExport.forEach(reg => {
                 const dateObj = reg.timestamp.toDate ? reg.timestamp.toDate() : new Date(reg.timestamp);
                 const timestampString = dateObj.toISOString();
 
+                // Garante que a data no CSV está no formato YYYY-MM-DD
                 csv += `${reg.id},"${reg.name}","${reg.cpf}","${reg.institution}","${reg.sector}","${reg.representation}",${reg.validationCode},${reg.date},${timestampString}\n`;
             });
             
@@ -746,7 +1071,8 @@
             if (link.download !== undefined) {
                 const url = URL.createObjectURL(blob);
                 link.setAttribute("href", url);
-                link.setAttribute("download", `frequencia_reuniao_${today}.csv`);
+                // Nome do arquivo com a data YYYY-MM-DD
+                link.setAttribute("download", `frequencia_reuniao_${meetingDate}.csv`); 
                 link.style.visibility = 'hidden';
                 document.body.appendChild(link);
                 link.click();
@@ -755,17 +1081,20 @@
             }
         });
 
-        // 5.4 Download PDF (Usando jsPDF com autoTable) - CORRIGIDO E APRIMORADO
+        // 6.6 Download PDF (Filtrado pela Reunião Ativa)
         document.getElementById('download-pdf').addEventListener('click', () => {
-            if (registrationsData.length === 0) {
-                showStatusMessage("Nenhum dado para exportar.", true);
+            // Garante que só exporta os dados da reunião ativa
+            const dataToExport = registrationsData.filter(reg => reg.date === meetingState.meetingId);
+            
+            if (dataToExport.length === 0) {
+                showStatusMessage("Nenhum dado para exportar na reunião ativa.", true);
                 return;
             }
 
-            // 1. FORMATAR A DATA (DD/MM/YYYY)
-            const todayStr_YYYYMMDD = getTodayDate(); // "YYYY-MM-DD"
-            const parts = todayStr_YYYYMMDD.split('-');
-            const todayStr_DDMMYYYY = `${parts[2]}/${parts[1]}/${parts[0]}`; // "DD/MM/YYYY"
+            // A data da reunião no formato YYYY-MM-DD
+            const todayStr_YYYYMMDD = meetingState.meetingId || getTodayDate(); 
+            // Converte para DD/MM/YYYY
+            const todayStr_DDMMYYYY = formatDateToBR(todayStr_YYYYMMDD); 
             
             // Acessa o construtor jsPDF através do objeto global 'jspdf'
             const doc = new jspdf.jsPDF(); 
@@ -775,14 +1104,17 @@
             doc.setFont("helvetica", "bold");
             doc.text("Comitê de Bacia Hidrográfica do Lago de Palmas", doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
             
+            // CORREÇÃO APLICADA AQUI: Subtítulo simplificado
             doc.setFontSize(12);
             doc.setFont("helvetica", "normal");
-            doc.text(`Registro de Frequência da reunião realizada em ${todayStr_DDMMYYYY}`, doc.internal.pageSize.getWidth() / 2, 30, { align: 'center' });
+            // Texto: Registro de Frequência da Reunião realizada em: Data
+            doc.text(`Registro de Frequência da Reunião realizada em: ${todayStr_DDMMYYYY}`, doc.internal.pageSize.getWidth() / 2, 30, { align: 'center' });
+
 
             // 3. PREPARAR DADOS PARA autoTable
             const headers = [["Nome", "Instituição/Órgão", "Setor", "Representação", "Cód. Validação"]];
             
-            const body = registrationsData
+            const body = dataToExport
                 // Ordena por nome alfabeticamente para a lista de presença
                 .sort((a, b) => a.name.localeCompare(b.name)) 
                 .map(reg => {
@@ -861,11 +1193,12 @@
             // Volta a cor de texto padrão
             doc.setTextColor(0, 0, 0);
 
-            doc.save(`frequencia_reuniao_${todayStr_DDMMYYYY}.pdf`);
+            doc.save(`frequencia_reuniao_${todayStr_YYYYMMDD}.pdf`);
             showStatusMessage("PDF gerado com sucesso!", false);
         });
 
-        // --- 6. Lógica de Validação (4ª Função) ---
+
+        // --- 7. Lógica de Validação (4ª Função) ---
         
         document.getElementById('validation-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -914,7 +1247,7 @@
                             <p><strong>Nome:</strong> ${data.name}</p>
                             <p><strong>Instituição:</strong> ${data.institution}</p>
                             <p><strong>Setor:</strong> ${data.sector}</p>
-                            <p><strong>Data da Reunião:</strong> <span class="font-semibold">${data.date}</span></p>
+                            <p><strong>Data da Reunião:</strong> <span class="font-semibold">${formatDateToBR(data.date)}</span></p>
                         </div>
                         <p class="mt-3 text-xs italic text-gray-600">Este registro foi feito em ${data.timestamp.toDate().toLocaleString('pt-BR')}.</p>
                     `;
