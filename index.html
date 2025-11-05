@@ -11,9 +11,11 @@
     <!-- Fonte Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Bibliotecas JS (Chart.js para gráficos, jspdf para PDF) -->
+    <!-- Bibliotecas JS -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- NOVO: Adiciona a biblioteca jspdf-autotable para tabelas formatadas no PDF -->
+    <script src="https://unpkg.com/jspdf-autotable@3.5.21/dist/jspdf.plugin.autotable.js"></script>
     
     <!-- Configuração do Tailwind com a Paleta de Cores -->
     <script>
@@ -298,6 +300,7 @@
 
     <!-- Script JavaScript (Módulo) -->
     <script type="module">
+        // Importações do Firebase (Protocolo HTTPS corrigido)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, where, getDocs, onSnapshot, runTransaction, doc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -752,72 +755,113 @@
             }
         });
 
-        // 5.4 Download PDF (Usando jsPDF)
+        // 5.4 Download PDF (Usando jsPDF com autoTable) - CORRIGIDO E APRIMORADO
         document.getElementById('download-pdf').addEventListener('click', () => {
             if (registrationsData.length === 0) {
                 showStatusMessage("Nenhum dado para exportar.", true);
                 return;
             }
 
-            const today = getTodayDate();
+            // 1. FORMATAR A DATA (DD/MM/YYYY)
+            const todayStr_YYYYMMDD = getTodayDate(); // "YYYY-MM-DD"
+            const parts = todayStr_YYYYMMDD.split('-');
+            const todayStr_DDMMYYYY = `${parts[2]}/${parts[1]}/${parts[0]}`; // "DD/MM/YYYY"
             
             // Acessa o construtor jsPDF através do objeto global 'jspdf'
             const doc = new jspdf.jsPDF(); 
-            doc.setFontSize(18);
-            doc.text(`Relatório de Frequência - ${today}`, 10, 10);
             
-            const headers = [["ID (Abrev)", "Nome", "CPF", "Setor", "Rep.", "Código", "Data/Hora"]];
-            
-            const body = registrationsData.map(reg => {
-                const dateObj = reg.timestamp.toDate ? reg.timestamp.toDate() : new Date(reg.timestamp);
-                const timeString = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
-                return [
-                    reg.id.substring(0, 4) + '...',
-                    reg.name,
-                    reg.cpf,
-                    reg.sector,
-                    reg.representation,
-                    reg.validationCode,
-                    `${reg.date} ${timeString}`
-                ];
-            });
-
-            // Renderiza cabeçalho e corpo da tabela
-            let y = 20;
-            doc.setFontSize(10);
-            const tableData = headers.concat(body);
-            
-            // Renderiza cabeçalho
+            // 2. ADICIONAR O CABEÇALHO PERSONALIZADO
+            doc.setFontSize(16);
             doc.setFont("helvetica", "bold");
-            let x = 10;
-            const columnWidths = [15, 45, 25, 25, 20, 20, 30]; // Larguras aproximadas para A4
-
-            headers[0].forEach((header, index) => {
-                doc.text(header, x, y);
-                x += columnWidths[index];
-            });
-            y += 5;
-            doc.line(10, y, 200, y); // Linha separadora
-            y += 5;
-
-            // Renderiza corpo
+            doc.text("Comitê de Bacia Hidrográfica do Lago de Palmas", doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+            
+            doc.setFontSize(12);
             doc.setFont("helvetica", "normal");
-            tableData.slice(1).forEach((row) => {
-                x = 10;
-                row.forEach((cell, index) => {
-                    doc.text(cell.toString(), x, y, { maxWidth: columnWidths[index] - 2 });
-                    x += columnWidths[index];
+            doc.text(`Registro de Frequência da reunião realizada em ${todayStr_DDMMYYYY}`, doc.internal.pageSize.getWidth() / 2, 30, { align: 'center' });
+
+            // 3. PREPARAR DADOS PARA autoTable
+            const headers = [["Nome", "Instituição/Órgão", "Setor", "Representação", "Cód. Validação"]];
+            
+            const body = registrationsData
+                // Ordena por nome alfabeticamente para a lista de presença
+                .sort((a, b) => a.name.localeCompare(b.name)) 
+                .map(reg => {
+                    return [
+                        reg.name,
+                        reg.institution,
+                        reg.sector,
+                        reg.representation,
+                        reg.validationCode
+                    ];
                 });
-                y += 7;
-                // Adiciona nova página se necessário
-                if (y > 280) {
-                    doc.addPage();
-                    y = 10;
+
+            // 4. RENDERIZAR A TABELA USANDO autoTable
+            
+            // Verifica se a função autoTable está disponível
+            if (typeof doc.autoTable === 'undefined') {
+                showStatusMessage("Erro: jspdf-autotable não carregado. Verifique as dependências.", true);
+                return;
+            }
+
+            doc.autoTable({
+                startY: 40,
+                head: headers,
+                body: body,
+                theme: 'striped', // Tema listrado
+                styles: {
+                    font: 'helvetica',
+                    fontSize: 9, // Tamanho da fonte menor
+                    cellPadding: 1.5,
+                    lineWidth: 0.1, 
+                    lineColor: '#e0e0e0'
+                },
+                headStyles: {
+                    fillColor: [23, 103, 129], // brand-primary: #176781
+                    textColor: 255, // Branco
+                    fontStyle: 'bold',
+                    fontSize: 10
+                },
+                // Ajuste de largura das colunas
+                columnStyles: {
+                    0: { cellWidth: 50 }, // Nome
+                    1: { cellWidth: 50 }, // Instituição/Órgão
+                    2: { cellWidth: 30 }, // Setor
+                    3: { cellWidth: 30 }, // Representação
+                    4: { cellWidth: 30 }, // Código
+                },
+                didDrawPage: (data) => {
+                    // Adiciona rodapé com número de página
+                    doc.setFontSize(8);
+                    doc.text("Página " + data.pageNumber, data.settings.margin.left, doc.internal.pageSize.height - 10);
                 }
             });
 
-            doc.save(`frequencia_reuniao_${today}.pdf`);
+            // Pega a posição Y final da tabela
+            let y = doc.autoTable.previous.finalY;
+
+            // 5. ADICIONAR O LINK DE VALIDAÇÃO
+            y += 20; // Espaço após a tabela
+            
+            // Verifica se precisa de nova página para o link
+            if (y > doc.internal.pageSize.height - 20) { 
+                doc.addPage();
+                y = 20;
+            }
+            
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "italic");
+            doc.setTextColor(0, 0, 0); // Volta a cor padrão
+            doc.text("Valide este e outros registros no portal oficial:", 10, y);
+            y += 5;
+            
+            const siteLink = window.location.href; // Pega a URL atual
+            doc.setTextColor(40, 58, 119); // Cor de link (azul)
+            doc.textWithLink(siteLink, 10, y, { url: siteLink });
+            
+            // Volta a cor de texto padrão
+            doc.setTextColor(0, 0, 0);
+
+            doc.save(`frequencia_reuniao_${todayStr_DDMMYYYY}.pdf`);
             showStatusMessage("PDF gerado com sucesso!", false);
         });
 
